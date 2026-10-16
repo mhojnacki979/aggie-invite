@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aggie Invite Options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Saira+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=Roboto+Slab:wght@500;700&family=Work+Sans:wght@400;500;600&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--page:#e9e7e3;--ink:#1d1b19;--ink2:#5a5651;--line:#cfcbc4;--maroon:#500000;--maroon2:#6e1a1a;--gold:#d9a521;--silver:#bfc3cc;--bronze:#c27a3a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:15px/1.55 'Barlow',system-ui,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 16px 80px}
+.top h1{font:800 34px/1.1 'Playfair Display',serif;margin:0 0 6px;color:var(--maroon)}
+.top p{margin:0 0 4px;color:var(--ink2);max-width:820px}
+.jump{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 8px}
+.jump a{font:600 14px 'Saira Condensed',sans-serif;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;color:#fff;background:var(--maroon);padding:7px 14px;border-radius:999px}
+.core{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:18px 0 8px}
+.core h2{font:700 15px 'Saira Condensed',sans-serif;letter-spacing:.08em;text-transform:uppercase;margin:0 0 8px;color:var(--maroon)}
+.core ul{margin:0;padding-left:18px;columns:2;column-gap:32px}
+.core li{margin:0 0 4px;break-inside:avoid}
+.opt{margin-top:46px}
+.opt-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;border-bottom:2px solid var(--maroon);padding-bottom:8px}
+.opt-num{font:700 46px/1 'Saira Condensed',sans-serif;color:var(--maroon)}
+.opt-name{font:800 26px/1.1 'Playfair Display',serif}
+.opt-tag{font:600 13px 'Saira Condensed',sans-serif;letter-spacing:.06em;text-transform:uppercase;background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--ink2)}
+.opt-pitch{margin:10px 0 16px;color:var(--ink2);max-width:880px}
+.frames{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:20px;align-items:start}
+.frames.three{grid-template-columns:minmax(0,1fr)}
+.label{font:600 12px 'Saira Condensed',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);margin:0 0 6px}
+.desk{border-radius:12px;overflow:hidden;border:1px solid #00000022}
+.bar{height:26px;background:#2a2826;display:flex;align-items:center;gap:6px;padding:0 10px}
+.bar i{width:9px;height:9px;border-radius:50%;background:#55524e;display:block}
+.bar span{margin-left:10px;font:12px 'Barlow',sans-serif;color:#9b968f}
+.phone{width:330px;border-radius:34px;border:9px solid #1b1a19;overflow:hidden;background:#000}
+.feat{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:18px}
+.feat div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.feat h3{margin:0 0 6px;font:700 14px 'Saira Condensed',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--maroon)}
+.feat ul{margin:0;padding-left:17px}
+.feat li{margin:0 0 3px}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- Option 1: Ringer sister (dark broadcast) ---------- */
+.o1{background:#0b0a0b;color:#ececee;font-family:'Barlow',sans-serif}
+.o1 .hd{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;border-bottom:1px solid #26222a;background:#120f11}
+.o1 .wm{font:800 22px/1 'Playfair Display',serif;letter-spacing:.01em}
+.o1 .wm small{display:block;font:600 11px 'Saira Condensed',sans-serif;letter-spacing:.22em;color:#c77;text-transform:uppercase;margin-top:4px}
+.o1 nav{display:flex;gap:18px;font:600 13px 'Saira Condensed',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#a9a4ab}
+.o1 nav b{color:#fff;border-bottom:2px solid #8a1d1d;padding-bottom:3px}
+.o1 .hero{padding:18px 22px 12px;border-bottom:1px solid #1d1a1e}
+.o1 .live{display:inline-flex;align-items:center;gap:6px;font:700 11px 'Saira Condensed',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#ffb3b3;background:#500000;border:1px solid #8a1d1d;padding:3px 9px;border-radius:999px}
+.o1 .live:before{content:"";width:7px;height:7px;border-radius:50%;background:#ff5252}
+.o1 h2{font:800 28px/1.15 'Playfair Display',serif;margin:8px 0 2px}
+.o1 .meta{color:#8e8a92;font-size:13px}
+.o1 .chips{display:flex;gap:6px;flex-wrap:wrap;padding:12px 22px 0}
+.o1 .chip{font:600 12px 'Saira Condensed',sans-serif;letter-spacing:.08em;text-transform:uppercase;border:1px solid #2e2a30;border-radius:999px;padding:4px 11px;color:#b6b2b9}
+.o1 .chip.on{background:#500000;border-color:#8a1d1d;color:#fff}
+.o1 .chips.sub .chip{font-size:11px;padding:3px 9px}
+.o1 table{width:100%;border-collapse:collapse;margin:12px 0 4px}
+.o1 th{font:600 11px 'Saira Condensed',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#7d7882;text-align:right;padding:6px 10px;border-bottom:1px solid #26222a}
+.o1 th:nth-child(1),.o1 th:nth-child(2){text-align:left}
+.o1 td{padding:9px 10px;border-bottom:1px solid #1b181c;text-align:right;font:600 15px 'Saira Condensed',sans-serif}
+.o1 td:nth-child(2){text-align:left;font:500 15px 'Barlow',sans-serif}
+.o1 td:first-child{text-align:left;width:46px}
+.o1 .rk{display:inline-flex;width:26px;height:26px;border-radius:50%;align-items:center;justify-content:center;font:700 14px 'Saira Condensed',sans-serif;background:#1d1a1e;color:#aaa}
+.o1 .r1{background:var(--gold);color:#2b1d00}.o1 .r2{background:var(--silver);color:#1b1d22}.o1 .r3{background:var(--bronze);color:#2b1300}
+.o1 .tot{color:#fff;font-size:17px}
+.o1 .sm{color:#7d7882;font-size:12px;font-family:'Barlow',sans-serif;font-weight:400;display:block}
+.o1 .foot{padding:8px 22px 14px;color:#6f6a73;font-size:12px;display:flex;justify-content:space-between}
+.o1 .pad{padding:0 12px}
+.o1.ph .hd{padding:12px 14px}.o1.ph .wm{font-size:18px}
+.o1.ph .hero{padding:12px 14px 10px}.o1.ph h2{font-size:21px}.o1.ph .chips{padding:10px 14px 0}
+.o1 .card{margin:10px 12px;border:1px solid #2a262c;border-radius:12px;background:#141114;padding:12px}
+.o1 .card h4{margin:0;font:600 17px 'Barlow',sans-serif}
+.o1 .ends{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-top:10px}
+.o1 .ends div{background:#1d191d;border-radius:7px;padding:6px 0;text-align:center;font:600 14px 'Saira Condensed',sans-serif}
+.o1 .ends div small{display:block;font:500 10px 'Barlow',sans-serif;color:#7d7882}
+
+/* ---------- Option 2: Line by line (light, schedule-first) ---------- */
+.o2{background:#f7f4ef;color:#221f1c;font-family:'Work Sans',sans-serif}
+.o2 .hd{background:var(--maroon);color:#fff;padding:14px 22px;display:flex;justify-content:space-between;align-items:center}
+.o2 .wm{font:700 21px/1 'Roboto Slab',serif}
+.o2 .wm small{display:block;font:500 12px 'Work Sans',sans-serif;opacity:.8;margin-top:4px}
+.o2 .srch{background:#ffffff1f;border:1px solid #ffffff40;border-radius:999px;padding:7px 14px;font-size:13px;color:#ffffffcc;min-width:230px}
+.o2 .lines{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:16px 22px 6px}
+.o2 .ln{background:#fff;border:1px solid #e2dcd2;border-radius:10px;padding:9px 11px}
+.o2 .ln b{display:block;font:700 14px 'Roboto Slab',serif}
+.o2 .ln span{font-size:12px;color:#6f6860}
+.o2 .ln em{font-style:normal;display:inline-block;margin-top:6px;font-size:11px;font-weight:600;border-radius:999px;padding:2px 8px}
+.o2 .done em{background:#e9e5de;color:#4d4740}
+.o2 .now{border:2px solid var(--maroon);background:#fff7f5}
+.o2 .now em{background:var(--maroon);color:#fff}
+.o2 .next em{background:#efe2c4;color:#5c4307}
+.o2 .bar2{height:5px;background:#eadfd9;border-radius:9px;margin-top:7px;overflow:hidden}
+.o2 .bar2 i{display:block;height:100%;width:60%;background:var(--maroon)}
+.o2 .sec{padding:12px 22px 4px;display:flex;justify-content:space-between;align-items:baseline}
+.o2 .sec h3{margin:0;font:700 17px 'Roboto Slab',serif}
+.o2 .sec span{font-size:12px;color:#6f6860}
+.o2 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:6px 22px 18px}
+.o2 .pod{background:#fff;border:1px solid #e2dcd2;border-radius:12px;padding:11px 13px}
+.o2 .pod h4{margin:0 0 2px;font:600 14px 'Work Sans',sans-serif}
+.o2 .st{font-size:11px;font-weight:600;border-radius:999px;padding:2px 8px;display:inline-block;margin-bottom:7px}
+.o2 .prov{background:#efe2c4;color:#5c4307}.o2 .fin{background:#dcebdc;color:#1f4d22}.o2 .tie{background:#f6d6d6;color:#6b1414}
+.o2 .row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13.5px}
+.o2 .row .m{width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.o2 .g{background:var(--gold);color:#3a2a00}.o2 .s{background:var(--silver);color:#22252b}.o2 .b{background:var(--bronze);color:#3a1a00}
+.o2 .row .nm{flex:1}
+.o2 .row .sc{font-weight:600;font-variant-numeric:tabular-nums}
+.o2 .left{font-size:12px;color:#6f6860;margin-top:6px;border-top:1px dashed #e2dcd2;padding-top:6px}
+.o2.ph .hd{padding:12px 14px}
+.o2 .find{margin:12px;background:#fff;border:1px solid #e2dcd2;border-radius:12px;padding:12px}
+.o2 .find .q{border:1px solid #d6cfc4;border-radius:999px;padding:8px 12px;font-size:13px;color:#8a8279}
+.o2 .me{margin-top:10px;border:2px solid var(--maroon);border-radius:12px;padding:10px 12px;background:#fff7f5}
+.o2 .me b{font:700 16px 'Roboto Slab',serif}
+.o2 .kv{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.o2 .kv div{background:#fff;border:1px solid #eadfd9;border-radius:8px;padding:5px 7px;font-size:11px;color:#6f6860}
+.o2 .kv div b{display:block;font:700 16px 'Work Sans',sans-serif;color:#221f1c}
+.o2 .mini{display:flex;gap:6px;overflow:hidden;padding:0 12px 10px}
+.o2 .mini .ln{min-width:118px}
+
+/* ---------- Option 3: Venue board + awards (scoreboard) ---------- */
+.o3{background:#07070a;color:#f2f2f2;font-family:'Barlow',sans-serif}
+.o3 .tv{aspect-ratio:16/9;display:grid;grid-template-rows:auto 1fr auto}
+.o3 .tvh{display:flex;justify-content:space-between;align-items:center;padding:12px 22px;background:var(--maroon)}
+.o3 .tvh b{font:700 26px/1 'Oswald',sans-serif;letter-spacing:.02em;text-transform:uppercase}
+.o3 .tvh span{font:500 15px 'Oswald',sans-serif;letter-spacing:.08em;text-transform:uppercase;opacity:.9}
+.o3 .tvb{display:grid;grid-template-columns:1.35fr 1fr;gap:14px;padding:14px 18px;min-height:0}
+.o3 .panel{background:#111116;border:1px solid #23232b;border-radius:10px;padding:10px 12px;overflow:hidden}
+.o3 .panel h5{margin:0 0 6px;font:600 14px 'Oswald',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#e8b4b4}
+.o3 .tr{display:grid;grid-template-columns:36px 1fr 52px 52px 60px;gap:6px;align-items:center;padding:5px 0;border-bottom:1px solid #1d1d24;font:500 15px 'Barlow',sans-serif}
+.o3 .tr .n{font:600 17px 'Oswald',sans-serif;text-align:right;font-variant-numeric:tabular-nums}
+.o3 .tr .t{color:#fff;font-size:19px}
+.o3 .tr.h{font:500 11px 'Oswald',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#7c7c88}
+.o3 .tr.h div{text-align:right}.o3 .tr.h div:nth-child(2){text-align:left}
+.o3 .bg{display:inline-flex;width:28px;height:28px;border-radius:6px;align-items:center;justify-content:center;font:600 15px 'Oswald',sans-serif;background:#1d1d24}
+.o3 .gd{background:var(--gold);color:#2a1d00}.o3 .sv{background:var(--silver);color:#1b1d22}.o3 .bz{background:var(--bronze);color:#2a1200}
+.o3 .ld{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #1d1d24;font-size:14px}
+.o3 .ld span:last-child{font:600 16px 'Oswald',sans-serif}
+.o3 .ld small{color:#8b8b96;display:block;font-size:11px}
+.o3 .tick{background:#14141a;border-top:1px solid #23232b;padding:8px 22px;font:500 14px 'Oswald',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#c9c9d2;white-space:nowrap;overflow:hidden}
+.o3 .tick b{color:#ffb3b3;margin-right:8px}
+.o3.ph{font-family:'Barlow',sans-serif}
+.o3 .phh{background:var(--maroon);padding:12px 14px;font:700 18px 'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.03em}
+.o3 .fav{margin:12px;background:#111116;border:1px solid #23232b;border-radius:12px;padding:10px 12px}
+.o3 .fav h5{margin:0 0 6px;font:600 12px 'Oswald',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#e8b4b4}
+.o3 .fr{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #1d1d24}
+.o3 .fr b{font-weight:600}
+.o3 .fr small{display:block;color:#8b8b96;font-size:11px}
+.o3 .fr span{font:600 20px 'Oswald',sans-serif}
+.o3 .award{margin:12px;border-radius:12px;background:#111116;border:1px solid #23232b;padding:14px;text-align:center}
+.o3 .award h6{margin:0;font:500 11px 'Oswald',sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#8b8b96}
+.o3 .award h4{margin:4px 0 12px;font:700 20px 'Oswald',sans-serif;text-transform:uppercase}
+.o3 .podium{display:grid;grid-template-columns:1fr 1fr 1fr;align-items:end;gap:6px}
+.o3 .podium div{border-radius:8px 8px 0 0;padding:8px 4px;font-size:12px;line-height:1.25}
+.o3 .podium b{display:block;font:700 18px 'Oswald',sans-serif}
+.o3 .p1{background:var(--gold);color:#2a1d00;height:118px}.o3 .p2{background:var(--silver);color:#1b1d22;height:92px}.o3 .p3{background:var(--bronze);color:#2a1200;height:76px}
+@media (max-width:900px){.frames{grid-template-columns:minmax(0,1fr)}.phone{margin:0 auto}.core ul{columns:1}.o2 .lines{grid-template-columns:repeat(2,1fr)}.o2 .grid{grid-template-columns:1fr}.o3 .tvb{grid-template-columns:1fr}.o3 .tv{aspect-ratio:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="top">
+  <h1>Aggie Invitational: live scoring and results</h1>
+  <p>Three directions for review. Nov 6–8, 2026, PEAP, College Station. One 60-arrow 18m round, five shooting lines (Fri 6pm; Sat 8am, 1pm, 6pm; Sun 9am), about 510 archers in about 50 divisions, top 3 per division awarded Sunday.</p>
+  <p>Sample scores below are real 2025 Aggie Invitational results pulled from EOS. Mix and match freely.</p>
+  <div class="jump"><a href="#o1">1 · Ringer sister</a><a href="#o2">2 · Line by line</a><a href="#o3">3 · Venue board + awards</a></div>
+</div>
+
+<div class="core">
+  <h2>In every option</h2>
+  <ul>
+    <li>Live scores from old EOS (api.eyesonscore.com), refreshed every 20 seconds, same calls as the Texas Ringer live board</li>
+    <li>Leaderboard for every division: 1st half, 2nd half, total, 10s, 9s (WA indoor tiebreak order)</li>
+    <li>Tap an archer to see their scorecard end by end</li>
+    <li>Phone first; works on the gym Wi-Fi with no app install</li>
+    <li>After the event, the page freezes to final results (no live calls)</li>
+    <li>Past results archive: 2022, 2023, 2024 and 2025 are all in EOS and can be loaded</li>
+    <li>Static site on GitHub Pages, free, handles traffic spikes</li>
+    <li>Maroon and white, text wordmark only, no university logo unless the club gives us theirs</li>
+  </ul>
+</div>
+
+<!-- ================= OPTION 1 ================= -->
+<section class="opt" id="o1">
+  <div class="opt-head"><span class="opt-num">1</span><span class="opt-name">Ringer sister</span><span class="opt-tag">Fastest build</span><span class="opt-tag">Dark</span></div>
+  <p class="opt-pitch">Same layout and code as texasringer.eyesonscore.com, recolored in maroon. Pick a bow style, then age and gender, and you get the leaderboard. Everyone who used the Ringer board already knows how it works.</p>
+  <div class="frames">
+    <div>
+      <p class="label">Desktop: division leaderboard</p>
+      <div class="desk">
+        <div class="bar"><i></i><i></i><i></i><span>aggie.eyesonscore.com/live</span></div>
+        <div class="o1">
+          <div class="hd"><div class="wm">Aggie Invitational<small>Texas A&amp;M Archery · College Station</small></div><nav><b>Live</b><span>Results</span><span>Past years</span></nav></div>
+          <div class="hero"><span class="live">Live · Sat 1:00 PM line</span><h2>2026 Aggie Invitational</h2><div class="meta">Nov 6–8, 2026 · PEAP · 60 arrows, 18m · updated 12s ago</div></div>
+          <div class="chips"><span class="chip on">Recurve</span><span class="chip">Compound</span><span class="chip">Barebow</span><span class="chip">Fixed pins</span><span class="chip">Para</span></div>
+          <div class="chips sub"><span class="chip">U13</span><span class="chip">U15</span><span class="chip">U18</span><span class="chip">U21</span><span class="chip on">Senior</span><span class="chip">50+</span><span class="chip">60+</span><span class="chip">70+</span><span style="width:12px"></span><span class="chip on">Men</span><span class="chip">Women</span></div>
+          <div class="pad"><table class="num">
+            <tr><th>#</th><th>Archer</th><th>1st 30</th><th>2nd 30</th><th>Total</th><th>10s</th><th>9s</th></tr>
+            <tr><td><span class="rk r1">1</span></td><td>Nicholas D'Amour<span class="sm">Sat 1pm · 23B</span></td><td>292</td><td>295</td><td class="tot">587</td><td>47</td><td>13</td></tr>
+            <tr><td><span class="rk r2">2</span></td><td>Trenton Cowles<span class="sm">Sat 8am · 25A</span></td><td>292</td><td>291</td><td class="tot">583</td><td>45</td><td>13</td></tr>
+            <tr><td><span class="rk r3">3</span></td><td>Alex Gilliam<span class="sm">Sun 9am · 9A</span></td><td>292</td><td>288</td><td class="tot">580</td><td>42</td><td>16</td></tr>
+            <tr><td><span class="rk">4</span></td><td>Ethan Chan<span class="sm">Sat 1pm · 23A</span></td><td>292</td><td>286</td><td class="tot">578</td><td>41</td><td>16</td></tr>
+            <tr><td><span class="rk">5</span></td><td>Venugopal Kunnavakkam<span class="sm">Fri 6pm · 8B</span></td><td>285</td><td>286</td><td class="tot">571</td><td>32</td><td>27</td></tr>
+            <tr><td><span class="rk">6</span></td><td>Jorrin Song<span class="sm">Sat 8am · 24C</span></td><td>283</td><td>282</td><td class="tot">565</td><td>31</td><td>23</td></tr>
+          </table></div>
+          <div class="foot"><span>30 archers in Recurve Senior Men</span><span>Scores from Eyes on Score</span></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <p class="label">Phone: tap an archer</p>
+      <div class="phone"><div class="o1 ph" style="min-height:560px">
+        <div class="hd"><div class="wm">Aggie Invitational</div><span class="live">Live</span></div>
+        <div class="chips"><span class="chip on">Compound</span><span class="chip on">Senior</span><span class="chip on">Women</span></div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center"><div><h4>Rendyn Brooks</h4><span class="sm">Compound Senior Women · Sat 8am · 6B</span></div><span class="rk r1">1</span></div>
+          <div style="display:flex;gap:18px;margin-top:10px" class="num"><div><span class="sm">Total</span><b style="font:700 26px 'Saira Condensed'">595</b></div><div><span class="sm">10s</span><b style="font:700 26px 'Saira Condensed'">55</b></div><div><span class="sm">9s</span><b style="font:700 26px 'Saira Condensed'">5</b></div></div>
+          <div class="ends num">
+            <div>30<small>End 1</small></div><div>30<small>End 2</small></div><div>29<small>End 3</small></div><div>30<small>End 4</small></div><div>30<small>End 5</small></div>
+            <div>29<small>End 6</small></div><div>30<small>End 7</small></div><div>30<small>End 8</small></div><div>29<small>End 9</small></div><div>30<small>End 10</small></div>
+          </div>
+        </div>
+        <div class="pad"><table class="num">
+          <tr><td><span class="rk r2">2</span></td><td>Carson Krahe</td><td class="tot">583</td></tr>
+          <tr><td><span class="rk r3">3</span></td><td>Annabelle Moore</td><td class="tot">576</td></tr>
+          <tr><td><span class="rk">4</span></td><td>Karen Waters</td><td class="tot">571</td></tr>
+        </table></div>
+      </div></div>
+    </div>
+  </div>
+  <div class="feat">
+    <div><h3>Features</h3><ul><li>Bow, age and gender pickers (about 50 boards)</li><li>Archer's line and target under their name</li><li>End-by-end scorecard on tap</li><li>Past years tab, same layout</li></ul></div>
+    <div><h3>Good for</h3><ul><li>Getting live in time with the least risk</li><li>Families checking a score between ends</li></ul></div>
+    <div><h3>Weak spot</h3><ul><li>Doesn't show that 3 more lines still have to shoot, so a Friday leader can look like the winner</li><li>No venue screen</li></ul></div>
+  </div>
+</section>
+
+<!-- ================= OPTION 2 ================= -->
+<section class="opt" id="o2">
+  <div class="opt-head"><span class="opt-num">2</span><span class="opt-name">Line by line</span><span class="opt-tag">Built for a 5-line event</span><span class="opt-tag">Light</span></div>
+  <p class="opt-pitch">Organized around the shooting schedule. The top strip shows the five lines and which one is shooting now. Below it, each division shows its podium so far, marked provisional until everyone in that division has shot, then final. Find-your-archer search gives line, target and live score.</p>
+  <div class="frames">
+    <div>
+      <p class="label">Desktop: weekend at a glance</p>
+      <div class="desk">
+        <div class="bar"><i></i><i></i><i></i><span>aggie.eyesonscore.com</span></div>
+        <div class="o2">
+          <div class="hd"><div class="wm">Aggie Invitational 2026<small>Nov 6–8 · PEAP, College Station</small></div><div class="srch">Find an archer…</div></div>
+          <div class="lines">
+            <div class="ln done"><b>Fri 6:00 PM</b><span>101 archers</span><br><em>Final</em></div>
+            <div class="ln done"><b>Sat 8:00 AM</b><span>104 archers</span><br><em>Final</em></div>
+            <div class="ln done"><b>Sat 1:00 PM</b><span>101 archers</span><br><em>Final</em></div>
+            <div class="ln done"><b>Sat 6:00 PM</b><span>102 archers</span><br><em>Final</em></div>
+            <div class="ln now"><b>Sun 9:00 AM</b><span>End 12 of 20</span><div class="bar2"><i></i></div><em>Shooting now</em></div>
+          </div>
+          <div class="sec"><h3>Podiums so far</h3><span>All divisions · tap any card for the full board</span></div>
+          <div class="grid">
+            <div class="pod"><h4>Recurve Senior Men</h4><span class="st prov">Provisional</span>
+              <div class="row"><span class="m g">1</span><span class="nm">Nicholas D'Amour</span><span class="sc">587</span></div>
+              <div class="row"><span class="m s">2</span><span class="nm">Trenton Cowles</span><span class="sc">583</span></div>
+              <div class="row"><span class="m b">3</span><span class="nm">Ethan Chan</span><span class="sc">578</span></div>
+              <div class="left">3 of 30 on the line now</div></div>
+            <div class="pod"><h4>Recurve U21 Men</h4><span class="st fin">Final</span>
+              <div class="row"><span class="m g">1</span><span class="nm">Pierce McAdam</span><span class="sc">585</span></div>
+              <div class="row"><span class="m s">2</span><span class="nm">Alexander Ma</span><span class="sc">574</span></div>
+              <div class="row"><span class="m b">3</span><span class="nm">Sam Dornan</span><span class="sc">567</span></div>
+              <div class="left">All 9 have shot</div></div>
+            <div class="pod"><h4>Compound U18 Men</h4><span class="st tie">Tie for 1st</span>
+              <div class="row"><span class="m g">1</span><span class="nm">Brody Wonch</span><span class="sc">589</span></div>
+              <div class="row"><span class="m g">1</span><span class="nm">Caleb Quiocho</span><span class="sc">589</span></div>
+              <div class="row"><span class="m b">3</span><span class="nm">Chase Crotty</span><span class="sc">588</span></div>
+              <div class="left">Same score, 10s and 9s: shoot-off needed. 6 of 31 on the line now</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <p class="label">Phone: find your archer</p>
+      <div class="phone"><div class="o2 ph" style="min-height:560px">
+        <div class="hd"><div class="wm" style="font-size:18px">Aggie Invitational</div></div>
+        <div class="mini" style="padding-top:12px">
+          <div class="ln now"><b>Sun 9:00 AM</b><span>End 12 of 20</span><div class="bar2"><i></i></div></div>
+          <div class="ln next"><b>Awards</b><span>After this line</span></div>
+        </div>
+        <div class="find">
+          <div class="q">Chase Crotty</div>
+          <div class="me"><b>Chase Crotty</b><div style="font-size:12px;color:#6f6860">Compound U18 Men · Sat 8am line · Target 11D</div>
+            <div class="kv"><div><b>588</b>Total</div><div><b>3rd</b>Place now</div><div><b>Final</b>His line</div></div>
+          </div>
+          <div style="font-size:12px;color:#6f6860;margin-top:10px">His division: <b style="color:#5c4307">provisional</b>, 6 archers on the line now. Star him to keep him at the top of your screen.</div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+  <div class="feat">
+    <div><h3>Features</h3><ul><li>Line strip with live progress (end X of 20)</li><li>Provisional / final / tie badge on every division</li><li>"Still to shoot" count per division</li><li>Find-your-archer: line, target, place, score</li><li>Shoot-off flag when a podium spot is tied on score, 10s and 9s</li></ul></div>
+    <div><h3>Good for</h3><ul><li>The real question people ask at a multi-line shoot: "is this going to hold?"</li><li>Tournament staff spotting shoot-offs before awards</li></ul></div>
+    <div><h3>Weak spot</h3><ul><li>Needs each archer's line from EOS (it's there today as "session")</li><li>More new code than option 1</li></ul></div>
+  </div>
+</section>
+
+<!-- ================= OPTION 3 ================= -->
+<section class="opt" id="o3">
+  <div class="opt-head"><span class="opt-num">3</span><span class="opt-name">Venue board + awards</span><span class="opt-tag">Most to build</span><span class="opt-tag">Dark</span></div>
+  <p class="opt-pitch">Two screens. A TV board for the PEAP gym that scrolls on its own, like hlsrlive did: the current line on the left, division leaders on the right, a ticker at the bottom. Plus a phone page where people star the archers they follow. On Sunday it switches to awards mode: one podium card per division to project during the ceremony.</p>
+  <div class="frames three">
+    <div>
+      <p class="label">Gym TV: auto-scrolling board</p>
+      <div class="desk"><div class="o3"><div class="tv">
+        <div class="tvh"><b>Aggie Invitational</b><span>Saturday 1:00 PM line · end 12 of 20</span></div>
+        <div class="tvb">
+          <div class="panel"><h5>On the line now · Recurve Senior Men</h5>
+            <div class="tr h"><div>#</div><div>Archer</div><div>1st</div><div>2nd</div><div>Total</div></div>
+            <div class="tr"><span class="bg gd">1</span><span>Nicholas D'Amour</span><span class="n">292</span><span class="n">177</span><span class="n t">469</span></div>
+            <div class="tr"><span class="bg sv">2</span><span>Ethan Chan</span><span class="n">292</span><span class="n">172</span><span class="n t">464</span></div>
+            <div class="tr"><span class="bg bz">3</span><span>Finis Jordan, Jr</span><span class="n">273</span><span class="n">164</span><span class="n t">437</span></div>
+            <div style="font:500 11px 'Oswald';letter-spacing:.12em;text-transform:uppercase;color:#7c7c88;margin-top:8px">Rotates to the next division every 12 seconds</div>
+          </div>
+          <div class="panel"><h5>Division leaders</h5>
+            <div class="ld"><span>Brody Wonch<small>Compound U18 Men</small></span><span>589</span></div>
+            <div class="ld"><span>Rendyn Brooks<small>Compound Senior Women</small></span><span>595</span></div>
+            <div class="ld"><span>Trenton Cowles<small>Recurve Senior Men</small></span><span>583</span></div>
+            <div class="ld"><span>Richard Stonebraker<small>Barebow Senior Men</small></span><span>500</span></div>
+          </div>
+        </div>
+        <div class="tick"><b>Next line</b> Sat 6:00 PM · check-in opens 5:00 PM &nbsp;·&nbsp; <b>Awards</b> Sunday after the 9:00 AM line &nbsp;·&nbsp; <b>Scores</b> aggie.eyesonscore.com</div>
+      </div></div></div>
+    </div>
+  </div>
+  <div class="frames" style="grid-template-columns:repeat(auto-fit,minmax(330px,1fr));margin-top:18px">
+    <div>
+      <p class="label">Phone: my archers</p>
+      <div class="phone"><div class="o3 ph" style="min-height:430px">
+        <div class="phh">Aggie Invitational</div>
+        <div class="fav"><h5>My archers</h5>
+          <div class="fr"><div><b>Chase Crotty</b><small>Compound U18 Men · 3rd · Final</small></div><span>588</span></div>
+          <div class="fr"><div><b>Annabelle Moore</b><small>Compound Senior Women · 3rd · Sun 9am</small></div><span>576</span></div>
+          <div class="fr"><div><b>Jeremy Tang</b><small>Barebow Senior Men · 5th · Final</small></div><span>476</span></div>
+        </div>
+        <div style="padding:0 14px;color:#8b8b96;font-size:12px">Stars stay on this phone. No sign-in.</div>
+      </div></div>
+    </div>
+    <div>
+      <p class="label">Sunday: awards mode (projected)</p>
+      <div class="phone" style="width:100%;max-width:520px;border-radius:14px;border-width:6px"><div class="o3" style="padding-bottom:10px">
+        <div class="award"><h6>Award 14 of 49</h6><h4>Compound Senior Women</h4>
+          <div class="podium">
+            <div class="p2"><b>2</b>Carson Krahe<br>583</div>
+            <div class="p1"><b>1</b>Rendyn Brooks<br>595</div>
+            <div class="p3"><b>3</b>Annabelle Moore<br>576</div>
+          </div>
+        </div>
+        <div style="text-align:center;color:#8b8b96;font-size:12px">Space bar or tap for the next division. Order matches the awards script.</div>
+      </div></div>
+    </div>
+  </div>
+  <div class="feat">
+    <div><h3>Features</h3><ul><li>TV board that scrolls itself (no one has to touch it)</li><li>Star archers on your phone, kept on the device</li><li>Awards mode: podium per division, step through with a clicker</li><li>Printable final results sheet per division</li></ul></div>
+    <div><h3>Good for</h3><ul><li>A sharper in-gym experience for the club</li><li>A smooth Sunday ceremony with the awards list already sorted</li></ul></div>
+    <div><h3>Weak spot</h3><ul><li>Needs a TV and laptop in the gym, and someone to run awards mode</li><li>Biggest build; the auto-scroll was never fully checked on a real screen at HLSR</li></ul></div>
+  </div>
+</section>
+</div>
+</body>
+</html>
