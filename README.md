@@ -68,3 +68,8 @@ builds the site; it goes live a few minutes later. If a test fails, nothing depl
 ## Commands
 
 `pnpm test`, `pnpm typecheck`, `pnpm build`. `pnpm dev` serves the site at http://localhost:3100.
+
+`node scripts/site-audit.mjs https://host [...]` checks a host for publicly exposed files
+(`.env`, logs, dependency manifests, `.git/`), missing security headers, and the http→https
+redirect. Read-only, about 30 seconds. Written after `api.eyesonscore.com` was found serving
+its 4.1 GB Laravel log; run it after any deploy or hosting change on the EOS hosts.
