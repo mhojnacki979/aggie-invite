@@ -8,6 +8,20 @@ builds the site; it goes live a few minutes later. If a test fails, nothing depl
 
 ## Event-day steps
 
+0. **Before the event, once archers are registered — run the preflight.** This is the check worth doing
+   early, because the thing most likely to break is invisible until the first archer is scored:
+
+   ```
+   pnpm preflight <the 2026 EOS tournament id>
+   ```
+
+   It runs the site's own parsing against the live tournament and tells you whether the five session keys in
+   `EVENT_2026.lines` match what EOS actually writes, whether every division name parses, and whether the
+   round format is what the page expects. If the session keys don't match, **every archer lands on an
+   "Other" line** and the line strip stops meaning anything — the preflight prints the keys EOS really has,
+   so you can correct `weekendLines(...)` in `src/config/event.ts` before the event rather than during it.
+   Run it again after any config change. It makes one EOS request and changes nothing.
+
 1. **2026 tournament exists in EOS:** set `EVENT_2026.tournamentId` to its EOS id (the same kind of long
    string as `EVENT_2025.tournamentId`), set `CURRENT_EVENT = EVENT_2026`, and push.
 2. **A line won't close** (an archer stopped mid-round on Sunday and the line still reads "Shooting now"):
