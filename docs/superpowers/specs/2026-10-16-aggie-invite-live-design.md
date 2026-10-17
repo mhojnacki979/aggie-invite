@@ -59,11 +59,20 @@ still change.
    calls, and keep it up as the final results. The snapshot includes every
    archer's scorecard, about 510 one-time calls, so tapping an archer on a frozen
    year still works if old EOS moves off Linode. (My call.)
-5. **Past results.** Load 2025 first, since it's the demo data: `QVRrY0JnUWtSTXJRdVBmN0xzWnBHQT09`.
-   After everything above works, add 2024 (`a0FvWDBhcW1kVnF3bFRRY1lMTWE0dz09`) and
-   2023 (`bVRpazQxQ2NEbGRrQmpqUnR2RzZPUT09`). Leave 2022 out. That year was split
-   into two EOS tournaments ("Double FITA" and "JOAD") with a different format.
-   (My call.)
+5. **Past results — every year EOS holds, with a year tab switcher.** Michael,
+   2026-10-17: "link all years with EOS data" and "tab them so we can switch
+   between years". That is 2022, 2023, 2024 and 2025:
+   - 2025 `QVRrY0JnUWtSTXJRdVBmN0xzWnBHQT09` — 512 archers, 60 arrows, 5 lines
+   - 2024 `a0FvWDBhcW1kVnF3bFRRY1lMTWE0dz09` — 517 archers, 60 arrows, 6 lines
+   - 2023 `bVRpazQxQ2NEbGRrQmpqUnR2RzZPUT09` — 493 archers, 60 arrows, 6 lines
+   - 2022 is **two** EOS tournaments shown as two sections under one 2022 tab:
+     `bWkrMXQ2bEhIaHdaVjBveUZQNVYyZz09` "Double FITA" (204 archers, **120 arrows
+     in 4 rounds**, 40 ends of 3) and `dFZISWJuT051SkNmb2lkNVB3cVdFQT09` "JOAD"
+     (104 archers, 60 arrows, the Sat 1pm line).
+   Including 2022 is why `ArcherRow` carries `rounds: number[]` rather than two
+   halves, and why division parsing accepts that year's lowercase names with the
+   class word before the age (`barebow (recurve) bowman u13 female`).
+   This supersedes the earlier "leave 2022 out" call.
 6. **Stretch: awards mode.** One podium per division, stepped through with a
    clicker or the space bar, for projecting during Sunday's ceremony.
 
@@ -231,5 +240,6 @@ display it as written. Never pass it through a time-zone conversion.
   once everyone else on their line is done.
 - Hand-entered shoot-off results through config, since EOS doesn't record them.
 - Saving every scorecard in the frozen results.
-- Past results cover 2023–2025, not 2022.
+- ~~Past results cover 2023–2025, not 2022.~~ Overridden by Michael on 2026-10-17:
+  all four years (2022–2025) are included, with a year tab switcher.
 - No "my archers" favorites in v1.
