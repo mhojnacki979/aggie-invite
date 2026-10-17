@@ -30,6 +30,9 @@ const AGE_ORDER = ['U13', 'U15', 'U18', 'U21', 'Senior', 'Amateur', '50+', '50�
 const UNKNOWN_AGE_INDEX = 98
 const UNKNOWN_SORT_KEY: [number, number, number] = [9, 99, 9]
 
+/** Class words that sit beside the age and add nothing to the label. */
+const CLASS_WORDS = new Set(['cub', 'bowman', 'cadet', 'junior', 'trophy'])
+
 const GENDERS: Record<string, 'Women' | 'Men'> = { female: 'Women', male: 'Men' }
 const GENDER_ORDER = { Women: 0, Men: 1 }
 
@@ -57,7 +60,14 @@ function slugify(label: string): string {
 }
 
 function normalizeAge(word: string): string {
-  return word.replace(/^50-70\+$/, '50–70+')
+  const dashed = word.replace(/^50-70\+$/, '50–70+')
+  return AGE_ORDER.find((age) => age.toLowerCase() === dashed.toLowerCase()) ?? dashed
+}
+
+/** The age may sit before or after the class word; take the first known one, else the first word left. */
+function pickAge(words: string[]): string {
+  const candidates = words.filter((w) => !CLASS_WORDS.has(w.toLowerCase())).map(normalizeAge)
+  return candidates.find((w) => AGE_ORDER.includes(w)) ?? candidates[0] ?? ''
 }
 
 function unknownDivision(raw: string): DivisionName {
@@ -72,7 +82,7 @@ export function parseDivisionName(raw: string): DivisionName {
 
   const words = trimmed.slice(bow.length).split(/\s+/).filter(Boolean)
   const gender = GENDERS[(words[words.length - 1] ?? '').toLowerCase()] ?? null
-  const age = normalizeAge((gender ? words.slice(0, -1) : words)[0] ?? '')
+  const age = pickAge(gender ? words.slice(0, -1) : words)
   const ageIndex = AGE_ORDER.indexOf(age)
   const label = [bow.entry.display, age, gender].filter(Boolean).join(' ')
 

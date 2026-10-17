@@ -29,6 +29,18 @@ describe('parseDivisionName', () => {
     expect(parseDivisionName('Compound U15 Cub Male').label).toBe('Compound U15 Men')
   })
 
+  it('reads the 2022 spelling with the class word before the age', () => {
+    expect(parseDivisionName('barebow (recurve) bowman u13 female')).toMatchObject({
+      label: 'Barebow U13 Women',
+      slug: 'barebow-u13-women',
+    })
+    expect(parseDivisionName('compound trophy cub u15 male').label).toBe('Compound U15 Men')
+  })
+
+  it('does not match Fixed Pin inside Fixed Pins', () => {
+    expect(parseDivisionName('Fixed Pins U13 Male').label).toBe('Fixed Pins U13 Men')
+  })
+
   it('parses a Para bow', () => {
     expect(parseDivisionName('Para W1 Senior Male').label).toBe('Para W1 Senior Men')
   })
@@ -65,5 +77,14 @@ describe('2025 fixture', () => {
     expect(parsed.length).toBe(49)
     expect(parsed.every((d) => d.known)).toBe(true)
     expect(new Set(parsed.map((d) => d.slug)).size).toBe(49)
+  })
+})
+
+describe('2022 Double FITA fixture', () => {
+  it('parses every division as known', () => {
+    const { rows } = parseScoreList(loadFixture('aggie-2022-double-fita-score-list.json'))
+    const parsed = [...new Set(rows.map((r) => r.division))].map(parseDivisionName)
+    expect(parsed.length).toBe(43)
+    expect(parsed.filter((d) => !d.known).map((d) => d.label)).toEqual([])
   })
 })

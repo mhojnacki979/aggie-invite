@@ -12,6 +12,8 @@ function weekendLines(fri: string, sat: string, sun: string): LineConfig[] {
 
 export const EVENT_2025: EventConfig = {
   year: 2025,
+  slug: '2025',
+  sectionLabel: null,
   name: '2025 Aggie Invitational',
   dates: 'Nov 7–9, 2025',
   tournamentId: 'QVRrY0JnUWtSTXJRdVBmN0xzWnBHQT09',
@@ -23,6 +25,8 @@ export const EVENT_2025: EventConfig = {
 
 export const EVENT_2026: EventConfig = {
   year: 2026,
+  slug: '2026',
+  sectionLabel: null,
   name: '2026 Aggie Invitational',
   dates: 'Nov 6–8, 2026',
   // Michael fills this in once EOS has the 2026 tournament.
@@ -36,35 +40,86 @@ export const EVENT_2026: EventConfig = {
 // Switch this to EVENT_2026 once EVENT_2026.tournamentId is set.
 export const CURRENT_EVENT: EventConfig = EVENT_2025
 
-export const ARCHIVE: { year: number; tournamentId: string; name: string; dates: string }[] = [
+export interface ArchiveTournament {
+  slug: string
+  id: string
+  name: string
+  sectionLabel: string | null
+}
+
+export interface ArchiveYear {
+  year: number
+  label: string
+  dates: string
+  tournaments: ArchiveTournament[]
+}
+
+/** Every year EOS holds, newest first. */
+export const YEARS: ArchiveYear[] = [
   {
     year: 2025,
-    tournamentId: 'QVRrY0JnUWtSTXJRdVBmN0xzWnBHQT09',
-    name: '2025 Aggie Invitational',
+    label: '2025',
     dates: 'Nov 7–9, 2025',
+    tournaments: [
+      { slug: '2025', id: 'QVRrY0JnUWtSTXJRdVBmN0xzWnBHQT09', name: '2025 Aggie Invitational', sectionLabel: null },
+    ],
   },
   {
     year: 2024,
-    tournamentId: 'a0FvWDBhcW1kVnF3bFRRY1lMTWE0dz09',
-    name: '2024 Aggie Invitational',
+    label: '2024',
     dates: 'Nov 22–24, 2024',
+    tournaments: [
+      { slug: '2024', id: 'a0FvWDBhcW1kVnF3bFRRY1lMTWE0dz09', name: '2024 Aggie Invitational', sectionLabel: null },
+    ],
   },
   {
     year: 2023,
-    tournamentId: 'bVRpazQxQ2NEbGRrQmpqUnR2RzZPUT09',
-    name: '2023 Aggie Invitational',
+    label: '2023',
     dates: 'Nov 3–5, 2023',
+    tournaments: [
+      { slug: '2023', id: 'bVRpazQxQ2NEbGRrQmpqUnR2RzZPUT09', name: '2023 Aggie Invitational', sectionLabel: null },
+    ],
+  },
+  {
+    year: 2022,
+    label: '2022',
+    dates: 'Nov 11–13, 2022',
+    tournaments: [
+      {
+        slug: '2022-double-fita',
+        id: 'bWkrMXQ2bEhIaHdaVjBveUZQNVYyZz09',
+        name: 'Aggie Invitational - Double FITA',
+        sectionLabel: 'Double FITA · 120 arrows',
+      },
+      {
+        slug: '2022-joad',
+        id: 'dFZISWJuT051SkNmb2lkNVB3cVdFQT09',
+        name: 'Aggie Invite - JOAD',
+        sectionLabel: 'JOAD · 60 arrows',
+      },
+    ],
   },
 ]
 
 /**
- * Archive years derive their lines from the data (2024 and 2023 each had six),
- * so the config carries none.
+ * One config per tournament held that year. Archive years derive their lines
+ * from the data (2024 and 2023 each had six), so the configs carry none.
  */
-export function archiveConfig(year: number): EventConfig | null {
-  const entry = ARCHIVE.find((item) => item.year === year)
-  if (!entry) return null
-  return { ...entry, live: false, lines: [], closedLines: [], shootOffs: {} }
+export function archiveConfigs(year: number): EventConfig[] {
+  const entry = YEARS.find((item) => item.year === year)
+  if (!entry) return []
+  return entry.tournaments.map((t) => ({
+    year,
+    slug: t.slug,
+    sectionLabel: t.sectionLabel,
+    name: t.name,
+    dates: entry.dates,
+    tournamentId: t.id,
+    live: false,
+    lines: [],
+    closedLines: [],
+    shootOffs: {},
+  }))
 }
 
 export const NEXT_EVENT_NOTE: string | null =

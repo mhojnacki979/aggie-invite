@@ -33,8 +33,7 @@ describe('parseScoreList', () => {
     expect(row).toMatchObject({
       division: 'Recurve Senior Male',
       rank: 1,
-      half1: 292,
-      half2: 295,
+      rounds: [292, 295],
       total: 587,
       tens: 47,
       nines: 13,
@@ -46,6 +45,15 @@ describe('parseScoreList', () => {
     })
     expect(typeof row?.shooterId).toBe('string')
     expect(row?.shooterId.length).toBeGreaterThan(0)
+  })
+
+  it('maps every round of the 2022 Double FITA', () => {
+    const { rows } = parseScoreList(loadFixture('aggie-2022-double-fita-score-list.json'))
+    expect(rows.length).toBe(204)
+    expect(new Set(rows.map((r) => r.division)).size).toBe(43)
+    const row = rows.find((r) => r.name === 'Sawyer Sullivan')
+    expect(row).toMatchObject({ rounds: [299, 291, 298, 297], total: 1185, arrowsDue: 120 })
+    expect(row?.rounds.reduce((a, b) => a + b, 0)).toBe(1185)
   })
 
   it('drops metadata keys', () => {

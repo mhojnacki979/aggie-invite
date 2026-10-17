@@ -4,8 +4,8 @@ export interface ArcherRow {
   name: string
   division: string
   rank: number
-  half1: number
-  half2: number
+  /** Every round's score, in round order. Length follows the event (2 for 60 arrows, 4 for a Double FITA). */
+  rounds: number[]
   total: number
   tens: number
   nines: number
@@ -42,6 +42,10 @@ export interface LineConfig {
 
 export interface EventConfig {
   year: number
+  /** URL segment for this tournament within its year. */
+  slug: string
+  /** Heading used when a year holds more than one tournament; null for a single event. */
+  sectionLabel: string | null
   name: string
   dates: string
   tournamentId: string

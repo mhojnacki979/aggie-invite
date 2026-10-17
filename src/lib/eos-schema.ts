@@ -16,8 +16,6 @@ const archerRowSchema = z.object({
   shooter_id: text,
   name: z.string(),
   rank: z.coerce.number(),
-  round_1: z.coerce.number(),
-  round_2: z.coerce.number(),
   total_score: z.coerce.number(),
   tens_count: z.coerce.number(),
   nine_count: z.coerce.number(),
@@ -28,14 +26,31 @@ const archerRowSchema = z.object({
   avg_count: optionalText,
 })
 
-function toArcherRow(r: z.infer<typeof archerRowSchema>, division: string): ArcherRow {
+function keyOrder(prefix: string): (a: string, b: string) => number {
+  return (a, b) => Number(a.slice(prefix.length)) - Number(b.slice(prefix.length))
+}
+
+/**
+ * Every round_N key on the raw row, in numeric order. Read from the keys that
+ * are actually there so a 60-arrow event (2 rounds) and a Double FITA (4)
+ * both come through whole.
+ */
+function roundsOf(raw: Record<string, unknown>): number[] | null {
+  const keys = Object.keys(raw)
+    .filter((k) => /^round_\d+$/.test(k))
+    .sort(keyOrder('round_'))
+  const scores = keys.map((k) => z.coerce.number().safeParse(raw[k]))
+  if (keys.length === 0 || scores.some((s) => !s.success)) return null
+  return scores.flatMap((s) => (s.success ? [s.data] : []))
+}
+
+function toArcherRow(r: z.infer<typeof archerRowSchema>, rounds: number[], division: string): ArcherRow {
   return {
     shooterId: r.shooter_id,
     name: r.name.trim(),
     division,
     rank: r.rank,
-    half1: r.round_1,
-    half2: r.round_2,
+    rounds,
     total: r.total_score,
     tens: r.tens_count,
     nines: r.nine_count,
@@ -64,7 +79,8 @@ export function parseScoreList(data: unknown): { rows: ArcherRow[]; skipped: num
       const member = record.safeParse(value)
       if (!member.success || !('name' in member.data)) continue
       const parsed = archerRowSchema.safeParse(member.data)
-      if (parsed.success) rows.push(toArcherRow(parsed.data, division))
+      const rounds = roundsOf(member.data)
+      if (parsed.success && rounds) rows.push(toArcherRow(parsed.data, rounds, division))
       else skipped += 1
     }
   }
@@ -83,10 +99,6 @@ const scorecardSchema = z.object({
 const strictNumber = z.union([z.number(), z.string().trim().min(1)]).pipe(z.coerce.number())
 
 const arrowSchema = z.object({ score: z.union([z.string().min(1), z.number()]).transform(String) })
-
-function keyOrder(prefix: string): (a: string, b: string) => number {
-  return (a, b) => Number(a.slice(prefix.length)) - Number(b.slice(prefix.length))
-}
 
 function arrowsOf(end: Record<string, unknown>): string[] {
   return Object.keys(end)

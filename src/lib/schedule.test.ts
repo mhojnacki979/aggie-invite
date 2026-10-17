@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { ARCHIVE, CURRENT_EVENT, EVENT_2025, archiveConfig } from '../config/event'
+import { CURRENT_EVENT, EVENT_2025, YEARS, archiveConfigs } from '../config/event'
 import { parseScoreList } from './eos-schema'
 import { deriveLines, eventDates, lineKeyFor, sessionKey } from './schedule'
 import type { ArcherRow } from './types'
@@ -75,9 +75,11 @@ describe('event config', () => {
     expect(CURRENT_EVENT.tournamentId).not.toBe('')
   })
 
-  it('builds archive configs with no lines, and null for unknown years', () => {
-    expect(archiveConfig(2024)).toMatchObject({ live: false, lines: [], dates: 'Nov 22–24, 2024' })
-    expect(archiveConfig(2019)).toBeNull()
-    expect(ARCHIVE.map((a) => a.year)).toEqual([2025, 2024, 2023])
+  it('builds one archive config per tournament, and none for unknown years', () => {
+    expect(archiveConfigs(2022).map((c) => c.slug)).toEqual(['2022-double-fita', '2022-joad'])
+    expect(archiveConfigs(2025)).toHaveLength(1)
+    expect(archiveConfigs(2019)).toEqual([])
+    expect(archiveConfigs(2024)[0]).toMatchObject({ live: false, lines: [], dates: 'Nov 22–24, 2024' })
+    expect(YEARS.map((y) => y.year)).toEqual([2025, 2024, 2023, 2022])
   })
 })
