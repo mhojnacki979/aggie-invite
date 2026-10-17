@@ -298,15 +298,16 @@ How matching works:
 - Create: `src/lib/fetch-state.ts`, `src/lib/use-event-data.ts`, `src/lib/frozen.ts`, `scripts/freeze.ts`
 - Create (generated): `public/data/2025.json`, `public/data/2025-cards.json`
 - Test: `src/lib/fetch-state.test.ts`
+- Modify: `src/lib/eos.ts` (the `res.ok` check below)
 
 **Interfaces:**
-- Consumes: `fetchScoreList`, `fetchScorecard` (Task 1); `EventConfig`, `ARCHIVE`, `EVENT_2026` (Task 3); `eventDates` (Task 3).
+- Consumes: `fetchScoreList`, `fetchScorecard` (Task 1); `EventConfig`, `YEARS`, `archiveConfigs`, `EVENT_2026` (Tasks 3 and 12); `eventDates` (Task 3).
 - Produces:
   ```ts
   // frozen.ts
-  export interface FrozenEvent { year: number; name: string; dates: string; tournamentId: string; frozenAt: string; rows: ArcherRow[] }
-  export function loadFrozen(year: number): Promise<FrozenEvent>                 // fetch `/data/${year}.json`
-  export function loadFrozenCard(year: number, shooterId: string): Promise<Scorecard | null> // fetch `/data/${year}-cards.json` once, cache
+  export interface FrozenEvent { year: number; slug: string; name: string; dates: string; tournamentId: string; frozenAt: string; rows: ArcherRow[] }
+  export function loadFrozen(slug: string): Promise<FrozenEvent>                 // fetch `/data/${slug}.json`
+  export function loadFrozenCard(slug: string, shooterId: string): Promise<Scorecard | null> // fetch `/data/${slug}-cards.json` once, cache per slug
   // fetch-state.ts
   export interface FetchState { rows: ArcherRow[] | null; updatedAt: number | null; error: boolean }
   export const INITIAL_FETCH_STATE: FetchState
@@ -318,15 +319,18 @@ How matching works:
   ```
 
 How `useEventData` behaves:
-- **Not live:** if `config.live` is false, load `loadFrozen(config.year)` once, and set `updatedAt` to `Date.parse(frozenAt)`.
+- **Not live:** if `config.live` is false, load `loadFrozen(config.slug)` once, and set `updatedAt` to `Date.parse(frozenAt)`.
 - **Live:** fetch on mount, then every `POLL_MS`. Skip a tick when `document.hidden`. Fetch right away when `visibilitychange` turns visible. Ignore results that arrive after unmount. Every result goes through `nextFetchState`.
 
-What `scripts/freeze.ts <year>` does:
-1. Finds the year's tournament in `ARCHIVE`, or uses `EVENT_2026` for 2026, and calls `fetchScoreList`.
-2. Refuses to write anything when there are 0 rows.
+What `scripts/freeze.ts <slug>` does. **It takes a tournament SLUG, not a year**, because 2022 is two tournaments (`2022-double-fita` and `2022-joad`):
+1. Finds the tournament whose `slug` matches across every `YEARS` entry, or uses `EVENT_2026` for slug `2026`, and calls `fetchScoreList`.
+2. Refuses to write anything when there are 0 rows, and exits non-zero on an unknown slug.
 3. Fetches the scorecard of every row with `arrowsShot > 0`, 4 at a time. Each call is retried once on a network error or timeout, but not on an EOS error status.
-4. Writes `public/data/<year>.json` (a `FrozenEvent` whose `dates` come from `eventDates`) and `public/data/<year>-cards.json` (`Record<shooterId, Scorecard>`), both minified.
-5. Prints `<year>: <rows> archers, <cards> scorecards`.
+4. Writes `public/data/<slug>.json` (a `FrozenEvent` whose `dates` come from `eventDates`) and `public/data/<slug>-cards.json` (`Record<shooterId, Scorecard>`), both minified.
+5. Prints `<slug>: <rows> archers, <cards> scorecards`.
+6. With no argument, freezes every slug in `YEARS` in turn.
+
+Also in this task — `src/lib/eos.ts` `post()` must check `res.ok` before parsing the body. Today a proxy 502 or a 429 HTML page surfaces as a bare `SyntaxError` from `res.json()`, naming neither the endpoint nor the status, which is what a visitor's phone hits when the gym Wi-Fi drops. Throw an `Error` carrying the HTTP status and the endpoint instead. The page behaviour is unchanged (the caller still shows the last good scores and `Reconnecting…`); this only makes the failure legible.
 
 - [ ] **Step 1: Write the failing tests** for `nextFetchState`:
   1. Initial state plus `{ ok: true, rows: [r], at: 1000 }` gives `{ rows: [r], updatedAt: 1000, error: false }`.
@@ -335,7 +339,7 @@ What `scripts/freeze.ts <year>` does:
 - [ ] **Step 2: Run** `pnpm test src/lib/fetch-state.test.ts`. Expected: FAIL.
 - [ ] **Step 3: Implement** `fetch-state.ts`, then `frozen.ts`, `use-event-data.ts` and `scripts/freeze.ts`.
 - [ ] **Step 4: Run** `pnpm test && pnpm typecheck`. Expected: all pass.
-- [ ] **Step 5: Freeze 2025.** Run `pnpm freeze 2025`. Expected output: `2025: 512 archers, 468 scorecards`. `public/data/2025.json` should be under 300 KB.
+- [ ] **Step 5: Freeze 2025.** Run `pnpm freeze 2025`. Expected output: `2025: 512 archers, 468 scorecards`. `public/data/2025.json` should be under 300 KB. (Task 9 freezes the remaining slugs; do not freeze them here.)
 - [ ] **Step 6: Commit**: `"Poll EOS for live data, load frozen years, and add the freeze script"`
 
 ---
@@ -426,7 +430,7 @@ Scorecard modal:
 - For a year with MORE than one tournament (2022), the page renders one `HomeView` per tournament in `YEARS` order, each under an `<h2>` naming it (`Double FITA · 120 arrows`, `JOAD · 60 arrows`) and each with its own line strip and podiums. Division links carry `&t=<slug>` so Task 8 loads the right tournament.
 - The year tab strip comes from Task 12's `YearTabs`, so it is identical on every page.
 
-- [ ] **Step 1: Freeze the archive.** Run `pnpm freeze` for each archive slug. Expected: `2025: 512 archers, 468 scorecards`, `2024: 517 archers, …`, `2023: 493 archers, …`, `2022-double-fita: 204 archers, …`, `2022-joad: 104 archers, …`.
+- [ ] **Step 1: Freeze the archive.** Run `pnpm freeze <slug>` for each remaining slug (2024, 2023, 2022-double-fita, 2022-joad). Expected: `2025: 512 archers, 468 scorecards`, `2024: 517 archers, …`, `2023: 493 archers, …`, `2022-double-fita: 204 archers, …`, `2022-joad: 104 archers, …`.
 - [ ] **Step 2: Build the page.** Run `pnpm build`, and check that `out/past/2024/index.html` and `out/past/2022/index.html` exist.
 - [ ] **Step 3: Verify in the browser.**
   - `/past/2024/` shows six derived lines, starting with `Fri 1:00 PM`, and the 2024 podiums. Its division labels read `Compound U15 Men`, not `Compound U15 Cub Male`.
