@@ -18,6 +18,7 @@
 - `next.config.mjs`: `output: 'export'`, `trailingSlash: true`, `images: { unoptimized: true }`, `basePath: ''`.
 - TypeScript strict with `noUncheckedIndexedAccess`. No `any` in new code. Functions under 50 lines, files under 500.
 - EOS is read only. One `tournament_score_list` call per poll per visitor. Poll every `20_000` ms. No polling while the tab is hidden. Scorecards only on tap.
+- **A completed event never polls.** Measured 2026-10-17: `api.eyesonscore.com` allows 60 requests/min, shared across every endpoint, and does not expose its rate-limit headers to the browser. At 3 calls/min per visitor, ~20 viewers exhaust the budget from polling alone. So a config is `live: true` only while its event is actually being shot; everything finished is served from a frozen snapshot with zero EOS calls.
 - Every EOS fetch has a 15-second timeout.
 - Colors: maroon `#500000`, gold `#d9a521`, silver `#bfc3cc`, bronze `#c27a3a`. Fonts: Roboto Slab (headings), Work Sans (body), tabular numbers for scores.
 - Text wordmark "Aggie Invitational". No Texas A&M logo. Footer "Scores by Eyes on Score".
@@ -28,6 +29,10 @@
 - **Never push without Michael's explicit OK.** Pushing to `main` deploys the live site.
 
 **Amendment A (2026-10-17, Michael):** the site covers EVERY year EOS holds — 2022, 2023, 2024, 2025 — with a year tab switcher. 2022 is two separate tournaments (a 120-arrow/4-round Double FITA and a 60-arrow JOAD event) shown as two sections under one 2022 tab. This supersedes the "Past results cover 2023–2025, not 2022" call. Task 12 amends the already-built data layer; Tasks 4, 7, 8 and 9 below carry the changes. Where this amendment and an older line disagree, the amendment wins.
+
+**Amendment B (2026-10-17, Michael): "for completed events, there doesn't need to be a refresh".** This supersedes the earlier decision to leave `EVENT_2025.live = true` for testing. Two consequences, both carried in Tasks 7 and 8 below:
+1. `EVENT_2025.live` is `false`. Until the 2026 tournament exists in EOS the site makes **no EOS requests at all** — the home page serves the frozen 2025 snapshot that Task 6 already wrote to `public/data/2025.json`.
+2. Even during the live event, once every line reads `final` the page stops its 20-second cadence and backs off to `IDLE_POLL_MS` (5 minutes), so the finished event stops consuming the shared budget while a late correction can still appear.
 
 ## Review Focus
 
@@ -368,6 +373,9 @@ Layout and copy:
   7. Podium cards for divisions with `shot > 0`. Each card has its label, a badge (`Provisional`, `Final`, or `Tie for 1st/2nd/3rd`), medal rows, and a footer: `{remaining} of {count} still to shoot`, `All {shot} have shot`, or `Same score, 10s and 9s: shoot-off needed`.
   8. When no division has scores: `Podiums appear here once scoring starts.`
 - **Preview:** `?preview=L-E` runs `cutAt` before `buildEventView` and shows a small "Preview" banner. Read it with `useSearchParams` inside `<Suspense>` in `app/page.tsx`.
+- **Completed events never poll (Amendment B).** Set `EVENT_2025.live = false` in `src/config/event.ts`, so `CURRENT_EVENT` loads the frozen `public/data/2025.json` and the site issues no EOS request until 2026 is configured. The status line then reads `Final results · Nov 7–9, 2025` instead of `Updated {n}s ago`.
+- **Back off when the event finishes.** Export `IDLE_POLL_MS = 300_000` from `src/lib/use-event-data.ts` and give `useEventData` an optional second argument `idle: boolean`. While `idle` is true the hook polls on `IDLE_POLL_MS` instead of `POLL_MS`. `HomeView` passes `idle = lines.length > 0 && lines.every(l => l.status === 'final')`. A late correction still arrives, just slowly. Add a `fetch-state.test.ts`-style unit test only if the interval choice can be tested without a DOM; otherwise state in the report that it was verified by inspection.
+- **Never poll an unconfigured event.** If `config.live` is true and `config.tournamentId` is `''`, the hook must not fetch at all, and the page shows the `NEXT_EVENT_NOTE` text with no `Reconnecting…`. This is the state the site sits in the moment `CURRENT_EVENT` is switched to 2026 before the id is filled in, which is exactly when someone is editing config under time pressure.
 - **Tokens** in `:root` (light). Light: `--bg #f7f4ef`, `--card #ffffff`, `--line #e2dcd2`, `--text #221f1c`, `--muted #6f6860`, `--prov-bg #efe2c4`, `--prov-text #5c4307`, `--final-bg #dcebdc`, `--final-text #1f4d22`, `--tie-bg #f6d6d6`, `--tie-text #6b1414`.
 - **Dark** (`@media (prefers-color-scheme: dark)`): `--bg #0b0a0b`, `--card #141114`, `--line #2a262c`, `--text #ececee`, `--muted #8e8a92`, `--prov-bg #3a2c0c`, `--prov-text #f3d58a`, `--final-bg #16301a`, `--final-text #9fd8a4`, `--tie-bg #3d1414`, `--tie-text #ffb3b3`. The brand and medal colors from Global Constraints apply in both themes.
 
@@ -399,7 +407,11 @@ Board:
 - `a` highlights that archer's row and scrolls to it.
 - An unknown slug shows `Division not found` with a link home.
 
-Scorecard modal:
+Scorecard modal (its EOS call shares the same 60/min budget as the board's polling, so it must not be tappable into a storm):
+- Cache a fetched scorecard per `(slug | tournamentId, shooterId)` for the session and serve repeat taps from the cache with no request.
+- De-duplicate in flight: tapping the same archer twice issues one request, and the row is not re-tappable while its request is open.
+- Catch every rejection. An `EosHttpError` with `status === 429` renders `Scores are busy right now. Tap to try again.`; any other failure renders the generic error text. Never leave an unhandled promise rejection.
+
 - Name, then `{division label} · {line label} · Target {target}`, then Total, 10s and 9s.
 - A grid of ends, each with its number, arrows, end score and running total.
 - Escape or an overlay click closes it.
