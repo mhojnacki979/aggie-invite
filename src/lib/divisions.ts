@@ -51,7 +51,7 @@ function findBow(raw: string): { entry: BowEntry; length: number } | null {
   return best
 }
 
-function slugify(label: string): string {
+export function slugify(label: string): string {
   return label
     .toLowerCase()
     .replace(/\+/g, 'plus')

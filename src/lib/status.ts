@@ -1,4 +1,4 @@
-import { compareDivisions, parseDivisionName } from './divisions'
+import { compareDivisions, parseDivisionName, slugify } from './divisions'
 import type { DivisionName } from './divisions'
 import { OTHER_LINE_KEY, deriveLines, lineKeyFor } from './schedule'
 import type { ArcherRow, EventConfig, LineConfig } from './types'
@@ -137,6 +137,29 @@ function buildDivision(
   }
 }
 
+/**
+ * Two raw EOS names can parse to one label and slug (typos in the tournament's own division names).
+ * The division with the most archers shooting keeps the clean label and slug; each other one
+ * (ties broken by raw name, so builds agree) is shown under its raw EOS name and a slug made from it,
+ * so every board stays reachable. A no-op when nothing collides.
+ */
+function separateCollisions(divisions: DivisionView[]): DivisionView[] {
+  const bySlug = new Map<string, DivisionView[]>()
+  for (const division of divisions) {
+    bySlug.set(division.display.slug, [...(bySlug.get(division.display.slug) ?? []), division])
+  }
+  const renamed = new Set<DivisionView>()
+  for (const group of bySlug.values()) {
+    const ranked = [...group].sort((a, b) => b.shot - a.shot || a.name.localeCompare(b.name))
+    for (const other of ranked.slice(1)) renamed.add(other)
+  }
+  return divisions.map((division) =>
+    renamed.has(division)
+      ? { ...division, display: { ...division.display, label: division.name.trim(), slug: slugify(division.name) } }
+      : division,
+  )
+}
+
 function groupByDivision(rows: ArcherRow[]): Map<string, ArcherRow[]> {
   const groups = new Map<string, ArcherRow[]>()
   for (const row of rows) groups.set(row.division, [...(groups.get(row.division) ?? []), row])
@@ -149,9 +172,9 @@ export function buildEventView(rows: ArcherRow[], config: EventConfig): EventVie
   const lineViews = buildLineViews(rows, lines, config)
   const viewByKey = new Map(lineViews.map((view) => [view.key, view]))
   const lineOf = (row: ArcherRow): LineView | undefined => viewByKey.get(lineKeyFor(row, lines))
-  const divisions = [...groupByDivision(rows)]
-    .map(([name, group]) => buildDivision(name, group, lineOf, config.shootOffs))
-    .sort((a, b) => compareDivisions(a.display, b.display))
+  const divisions = separateCollisions(
+    [...groupByDivision(rows)].map(([name, group]) => buildDivision(name, group, lineOf, config.shootOffs)),
+  ).sort((a, b) => compareDivisions(a.display, b.display))
   const lineByShooter: Record<string, LineView> = {}
   for (const row of rows) {
     const view = lineOf(row)
