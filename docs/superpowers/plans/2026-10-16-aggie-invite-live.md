@@ -227,7 +227,8 @@ Implement the spec's "Rules for status" exactly:
 - Rows on lines before `lineIndex` are unchanged.
 - Rows on later lines, or the Other line, get `arrowsShot`, `total`, `tens` and `nines` set to 0 and every entry of `rounds` set to 0.
 - Rows on line `lineIndex` get `shot = min(row.arrowsShot, end * 3)`, then, with `per = row.arrowsDue / row.rounds.length` (30 for every real event):
-  - round `i` keeps `round(rounds[i] * clamp(shot - i * per, 0, per) / per)`. So a full round is untouched, an unstarted round is 0, and the round in progress is scaled.
+  - For round `i`, let `shotIn = clamp(row.arrowsShot - i * per, 0, per)` (arrows the archer actually shot in that round) and `keptIn = clamp(shot - i * per, 0, per)` (arrows the cut keeps). Round `i` keeps `round(rounds[i] * keptIn / shotIn)`, or 0 when `shotIn` is 0.
+  - **Scale against arrows actually shot, never against `per`.** An archer who stopped mid-round has already earned their whole round score on fewer than `per` arrows: Jenna Lopez (Compound Senior Female, 2025) scored 277 + 27 = 304 on 33 arrows, so dividing her 27 by a full 30 would display her as 280 even in a cut that keeps every arrow she shot. For an archer who completed the round the two divisors are equal, so nothing else changes.
   - `total` is the sum of the scaled `rounds`. `tens` and `nines` are scaled by `shot / row.arrowsShot`.
 - Then re-rank each division by total, tens, then nines, all descending, with competition ranking (1, 1, 3). This re-ranking is allowed only because preview is a simulation.
 
