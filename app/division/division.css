@@ -1,0 +1,204 @@
+/* ---------- Division board ---------- */
+/* Loaded only with this route, so anything it shares with the home page is restated here. */
+
+.dv-page {
+  min-width: 0;
+}
+
+.dv-back {
+  display: inline-block;
+  padding: 4px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.dv-back:hover {
+  text-decoration: underline;
+}
+
+.dv-title {
+  margin-top: 4px;
+  font-size: 26px;
+  line-height: 1.15;
+}
+
+.dv-sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.dv-event {
+  font-size: 13px;
+}
+
+.dv-notfound {
+  margin: 16px 0 8px;
+  font-family: var(--font-heading);
+  font-size: 20px;
+}
+
+.status-line {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Status badges, the same pills as on the home page's podium cards. */
+.badges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge-prov {
+  background: var(--prov-bg);
+  color: var(--prov-text);
+}
+
+.badge-final {
+  background: var(--final-bg);
+  color: var(--final-text);
+}
+
+.badge-tie {
+  background: var(--tie-bg);
+  color: var(--tie-text);
+}
+
+/* ---------- Table ---------- */
+
+.dv-scroll {
+  margin-top: 14px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.dv-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.dv-table th,
+.dv-table td {
+  padding: 8px 6px;
+  border-top: 1px solid var(--line);
+  text-align: right;
+  vertical-align: middle;
+}
+
+.dv-table thead th {
+  border-top: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.dv-table th:first-child,
+.dv-table td:first-child {
+  width: 40px;
+  padding-left: 12px;
+  text-align: left;
+}
+
+.dv-table th:last-child,
+.dv-table td:last-child {
+  padding-right: 12px;
+}
+
+.dv-table .dv-archer {
+  text-align: left;
+}
+
+.dv-total {
+  font-weight: 700;
+}
+
+.dv-open {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dv-name {
+  display: block;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.dv-meta {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.dv-tappable {
+  cursor: pointer;
+}
+
+.dv-tappable:hover {
+  background: var(--bg);
+}
+
+.dv-open:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* A scorecard request for this archer is still open: it can't be tapped into a second one. */
+.dv-pending {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+/* No arrows shot: shown, but muted and not tappable. */
+.dv-muted {
+  color: var(--muted);
+}
+
+.dv-muted .dv-name {
+  font-weight: 400;
+}
+
+.dv-target {
+  background: var(--now-bg);
+  box-shadow: inset 4px 0 0 var(--accent);
+}
+
+@media (max-width: 480px) {
+  .dv-title {
+    font-size: 22px;
+  }
+
+  .dv-round,
+  .dv-nines {
+    display: none;
+  }
+}
