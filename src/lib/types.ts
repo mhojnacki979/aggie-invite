@@ -52,5 +52,10 @@ export interface EventConfig {
   live: boolean
   lines: LineConfig[]
   closedLines: string[]
+  /**
+   * The tournament is over and its results are saved: every line with an arrow is final even when an
+   * archer withdrew partway (2022). Unset on the current event so its `?preview=` states still show.
+   */
+  finished?: boolean
   shootOffs: Record<string, string[]>
 }

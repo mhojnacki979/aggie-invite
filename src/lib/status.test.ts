@@ -197,6 +197,18 @@ describe('mid-event states', () => {
     expect(division(view, name).status).toBe('final')
   })
 
+  it('10b. a finished event closes every line that has an arrow, whoever dropped out', () => {
+    const { list, division: name } = sundayPartial()
+    const view = buildEventView(list, { ...cfg, finished: true })
+    expect(view.lines[4]?.status).toBe('final')
+    expect(division(view, name).status).toBe('final')
+  })
+
+  it('10c. a finished event still reads upcoming for a line nobody shot', () => {
+    const view = buildEventView([], { ...cfg, finished: true })
+    expect(statuses(view)).toEqual(['upcoming', 'upcoming', 'upcoming', 'upcoming', 'upcoming'])
+  })
+
   it('11. no data at all reads upcoming', () => {
     const view = buildEventView([], cfg)
     expect(view.lines).toHaveLength(5)

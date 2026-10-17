@@ -35,6 +35,12 @@ function loadingText(config: EventConfig, state: FetchState): string {
   return config.live ? 'Waiting for the scoreboard…' : "Couldn't load these results. Reload to try again."
 }
 
+/** The event this board belongs to. A tournament inside a multi-tournament year already names itself in its section label, so the year stands in for the name. */
+function eventLabel(config: EventConfig): string {
+  if (config.sectionLabel === null) return config.name
+  return `${config.year} Aggie Invitational · ${config.sectionLabel}`
+}
+
 function Header({ division, config }: { division: DivisionView; config: EventConfig }) {
   return (
     <header className="dv-head">
@@ -45,7 +51,7 @@ function Header({ division, config }: { division: DivisionView; config: EventCon
       <div className="dv-sub">
         <DivisionBadge division={division} />
         <span>{archerCount(division.count)}</span>
-        <span className="dv-event">{[config.name, config.sectionLabel].filter(Boolean).join(' · ')}</span>
+        <span className="dv-event">{eventLabel(config)}</span>
       </div>
     </header>
   )

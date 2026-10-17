@@ -37,6 +37,10 @@ describe('parseDivisionName', () => {
     expect(parseDivisionName('compound trophy cub u15 male').label).toBe('Compound U15 Men')
   })
 
+  it('capitalizes a class that stands in for the age (2022 JOAD yeoman)', () => {
+    expect(parseDivisionName('compound yeoman female').label).toBe('Compound Yeoman Women')
+  })
+
   it('does not match Fixed Pin inside Fixed Pins', () => {
     expect(parseDivisionName('Fixed Pins U13 Male').label).toBe('Fixed Pins U13 Men')
   })

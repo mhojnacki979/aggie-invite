@@ -67,7 +67,7 @@ function lineStatus(archers: ArcherRow[], laterStarted: boolean, closed: boolean
   return started.length === 0 ? 'upcoming' : 'shooting'
 }
 
-function buildLineViews(rows: ArcherRow[], lines: LineConfig[], closedLines: string[]): LineView[] {
+function buildLineViews(rows: ArcherRow[], lines: LineConfig[], config: EventConfig): LineView[] {
   const groups = groupByLine(rows, lines)
   const real = lines.filter((line) => line.key !== OTHER_LINE_KEY)
   return lines.map((line) => {
@@ -76,10 +76,11 @@ function buildLineViews(rows: ArcherRow[], lines: LineConfig[], closedLines: str
     const later = index < 0 ? [] : real.slice(index + 1)
     const laterStarted = later.some((next) => (groups.get(next.key) ?? []).some(hasArrow))
     const mostArrows = Math.max(0, ...archers.map((row) => row.arrowsShot))
+    const closed = config.closedLines.includes(line.key) || (config.finished === true && mostArrows > 0)
     const view: LineView = {
       key: line.key,
       label: line.label,
-      status: lineStatus(archers, laterStarted, closedLines.includes(line.key)),
+      status: lineStatus(archers, laterStarted, closed),
       archers: archers.length,
       endsShot: Math.floor(mostArrows / ARROWS_PER_END),
     }
@@ -145,7 +146,7 @@ function groupByDivision(rows: ArcherRow[]): Map<string, ArcherRow[]> {
 /** Everything the pages show: line states, every division with its podium and ties. */
 export function buildEventView(rows: ArcherRow[], config: EventConfig): EventView {
   const lines = resolveLines(rows, config)
-  const lineViews = buildLineViews(rows, lines, config.closedLines)
+  const lineViews = buildLineViews(rows, lines, config)
   const viewByKey = new Map(lineViews.map((view) => [view.key, view]))
   const lineOf = (row: ArcherRow): LineView | undefined => viewByKey.get(lineKeyFor(row, lines))
   const divisions = [...groupByDivision(rows)]

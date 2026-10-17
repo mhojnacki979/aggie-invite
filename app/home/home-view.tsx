@@ -30,15 +30,18 @@ function usePreviewRows(rows: ArcherRow[] | null, config: EventConfig, preview: 
   }, [rows, config.lines, lineIndex, end])
 }
 
-function Podiums({ divisions, config }: { divisions: DivisionView[]; config: EventConfig }) {
+function Podiums({ divisions, config, embedded }: { divisions: DivisionView[]; config: EventConfig; embedded: boolean }) {
+  const Heading = embedded ? 'h3' : 'h2'
+  // Several boards can share a page (2022), so the heading id carries the tournament.
+  const headingId = `podiums-heading-${config.slug}`
   const shown = divisions.filter((division) => division.shot > 0)
   if (shown.length === 0) return <p className="muted">Podiums appear here once scoring starts.</p>
   const allFinal = shown.every((division) => division.status === 'final')
   return (
-    <section aria-labelledby="podiums-heading">
-      <h2 id="podiums-heading" className="section-title">
+    <section aria-labelledby={headingId}>
+      <Heading id={headingId} className="section-title">
         {allFinal ? 'Final podiums' : 'Podiums so far'}
-      </h2>
+      </Heading>
       <div className="pod-grid">
         {shown.map((division) => (
           <PodiumCard key={division.name} division={division} href={divisionHref(config, division.display.slug)} />
@@ -67,13 +70,13 @@ function loadingText(config: EventConfig, state: FetchState): string {
  * Lines, search and podiums. Until the first rows arrive (or an unconfigured event has none to
  * wait for) there is nothing true to show: five Upcoming lines would be false for a finished event.
  */
-function Board({ config, state, view }: { config: EventConfig; state: FetchState; view: EventView }) {
+function Board({ config, state, view, embedded }: { config: EventConfig; state: FetchState; view: EventView; embedded: boolean }) {
   if (!isUnconfigured(config) && state.rows === null) return <p className="muted">{loadingText(config, state)}</p>
   return (
     <>
       {view.lines.length > 0 && <LineStrip lines={view.lines} />}
       <ArcherSearch view={view} config={config} />
-      <Podiums divisions={view.divisions} config={config} />
+      <Podiums divisions={view.divisions} config={config} embedded={embedded} />
     </>
   )
 }
@@ -83,11 +86,23 @@ function allLinesFinal(view: EventView): boolean {
   return view.lines.length > 0 && view.lines.every((line) => line.status === 'final')
 }
 
+/** Its own title: the event name as the page heading, or (inside a multi-tournament page) the section's label as a subheading. */
+function Heading({ config, embedded }: { config: EventConfig; embedded: boolean }) {
+  if (embedded) return <h2 className="page-title">{config.sectionLabel ?? config.name}</h2>
+  return (
+    <>
+      <h1 className="page-title">{config.name}</h1>
+      <p className="page-meta">{config.dates} · PEAP, College Station</p>
+    </>
+  )
+}
+
 /**
  * The home page body for one event: line strip, archer search and a podium card per division.
+ * `embedded` is for one of several boards on a page that already has its own h1 (the two 2022 tournaments).
  * Reads `?preview=`, so whoever renders it needs a Suspense boundary above it.
  */
-export function HomeView({ config, note }: { config: EventConfig; note: string | null }) {
+export function HomeView({ config, note, embedded = false }: { config: EventConfig; note: string | null; embedded?: boolean }) {
   const [idle, setIdle] = useState(false)
   const state = useEventData(config, idle)
   const preview = parsePreview(useSearchParams().get('preview'))
@@ -99,12 +114,11 @@ export function HomeView({ config, note }: { config: EventConfig; note: string |
 
   return (
     <div className="page">
-      <h1 className="page-title">{config.name}</h1>
-      <p className="page-meta">{config.dates} · PEAP, College Station</p>
+      <Heading config={config} embedded={embedded} />
       {!isUnconfigured(config) && <StatusLine config={config} state={state} />}
       {preview && <PreviewBanner preview={preview} view={view} />}
       {banner && <p className="banner">{banner}</p>}
-      <Board config={config} state={state} view={view} />
+      <Board config={config} state={state} view={view} embedded={embedded} />
     </div>
   )
 }

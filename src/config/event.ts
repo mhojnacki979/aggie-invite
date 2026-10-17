@@ -119,6 +119,7 @@ export function archiveConfigs(year: number): EventConfig[] {
     live: false,
     lines: [],
     closedLines: [],
+    finished: true,
     shootOffs: {},
   }))
 }

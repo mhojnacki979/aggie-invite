@@ -59,9 +59,10 @@ function slugify(label: string): string {
     .replace(/^-+|-+$/g, '')
 }
 
+/** An age not in AGE_ORDER (the 2022 JOAD's `yeoman`) is shown with a capital letter, as EOS lowercases it. */
 function normalizeAge(word: string): string {
   const dashed = word.replace(/^50-70\+$/, '50–70+')
-  return AGE_ORDER.find((age) => age.toLowerCase() === dashed.toLowerCase()) ?? dashed
+  return AGE_ORDER.find((age) => age.toLowerCase() === dashed.toLowerCase()) ?? dashed.charAt(0).toUpperCase() + dashed.slice(1)
 }
 
 /** The age may sit before or after the class word; take the first known one, else the first word left. */
