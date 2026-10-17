@@ -21,6 +21,16 @@ export function stepIndex(i: number, n: number, key: string): number {
   return i
 }
 
+export type SlideMode = 'provisional' | 'podium'
+
+/**
+ * What a division's slide may show. Anything not final is `provisional` and gets no podium, whatever
+ * else is true of it: standings that can still change are never read out as awards.
+ */
+export function slideMode(division: DivisionView): SlideMode {
+  return division.status === 'final' ? 'podium' : 'provisional'
+}
+
 /**
  * `settled`: one archer holds this place. `tie`: two or more share it and a shoot-off decides.
  * `covered`: a tie above takes this place as well, so nobody can be named yet.

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CURRENT_EVENT, SCORING_SOON_NOTE } from '@/config/event'
-import { awardsOrder, podiumSlots, stepIndex } from '@/lib/awards'
+import { awardsOrder, podiumSlots, slideMode, stepIndex } from '@/lib/awards'
 import type { PlaceSlot } from '@/lib/awards'
 import { buildEventView } from '@/lib/status'
 import type { DivisionView } from '@/lib/status'
@@ -77,7 +77,7 @@ function Slide({ division, index, total }: { division: DivisionView; index: numb
         Award {index + 1} of {total}
       </p>
       <h1 className="aw-title">{division.display.label}</h1>
-      {division.status === 'provisional' ? <Provisional division={division} /> : <Podium division={division} />}
+      {slideMode(division) === 'podium' ? <Podium division={division} /> : <Provisional division={division} />}
     </section>
   )
 }
@@ -88,13 +88,13 @@ function useStepper(total: number): [number, () => void] {
   useEffect(() => {
     const onKey = (event: KeyboardEvent): void => {
       if (event.ctrlKey || event.metaKey || event.altKey) return
-      const next = stepIndex(index, total, event.key)
       if (event.key === ' ' || event.key.startsWith('Page')) event.preventDefault()
-      if (next !== index) setIndex(next)
+      // Functional update: two keydowns in one tick (a bouncing clicker) each move from the latest slide.
+      setIndex((current) => stepIndex(current, total, event.key))
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [index, total])
+  }, [total])
   // A division list that shrinks (a fresh poll) must not leave the index past the end.
   useEffect(() => setIndex((current) => Math.min(current, Math.max(0, total - 1))), [total])
   const forward = useCallback(() => setIndex((current) => stepIndex(current, total, 'ArrowRight')), [total])

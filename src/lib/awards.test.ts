@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { EVENT_2025 } from '../config/event'
-import { awardsOrder, podiumSlots, stepIndex } from './awards'
+import { awardsOrder, podiumSlots, slideMode, stepIndex } from './awards'
 import { parseScoreList } from './eos-schema'
 import { buildEventView } from './status'
 import type { DivisionView, EventView } from './status'
@@ -23,6 +23,17 @@ function division(label: string): DivisionView {
 
 function names(rows: ArcherRow[]): string[] {
   return rows.map((row) => row.name)
+}
+
+/** A division whose podium has the given ranks, in order, using real archers from a full division. */
+function withRanks(ranks: number[]): DivisionView {
+  const base = division('Compound Senior Women')
+  const podium = ranks.map((rank, i) => {
+    const row = base.rows[i]
+    if (!row) throw new Error(`no archer ${i}`)
+    return { ...row, rank }
+  })
+  return { ...base, podium }
 }
 
 describe('stepIndex', () => {
@@ -96,5 +107,43 @@ describe('podiumSlots', () => {
   it('leaves places empty when fewer than three archers shot', () => {
     const slots = podiumSlots(division('Recurve 50+ Men'))
     expect(slots.map((s) => s.kind)).toEqual(['settled', 'settled', 'empty'])
+  })
+
+  it('covers 2nd and 3rd under a three-way tie for 1st', () => {
+    const slots = podiumSlots(withRanks([1, 1, 1]))
+    expect(slots.map((s) => s.kind)).toEqual(['tie', 'covered', 'covered'])
+    expect(slots[0]?.archers).toHaveLength(3)
+  })
+
+  it('holds a tie for 3rd with 1st and 2nd settled', () => {
+    const slots = podiumSlots(withRanks([1, 2, 3, 3]))
+    expect(slots.map((s) => s.kind)).toEqual(['settled', 'settled', 'tie'])
+    expect(slots[2]?.archers).toHaveLength(2)
+  })
+
+  it('covers 3rd under a three-way tie for 2nd', () => {
+    const slots = podiumSlots(withRanks([1, 2, 2, 2]))
+    expect(slots.map((s) => s.kind)).toEqual(['settled', 'tie', 'covered'])
+  })
+})
+
+describe('slideMode', () => {
+  const final = division('Compound Senior Women')
+
+  it('shows a podium for a final division', () => {
+    expect(slideMode(final)).toBe('podium')
+  })
+
+  it('never shows a podium for a provisional division', () => {
+    expect(slideMode({ ...final, status: 'provisional', remaining: 3 })).toBe('provisional')
+  })
+
+  it('stays provisional when the division is also tied', () => {
+    const tied = { ...division('Compound U18 Men'), status: 'provisional' as const, remaining: 1 }
+    expect(slideMode(tied)).toBe('provisional')
+  })
+
+  it('shows the podium (with its shoot-off state) for a final tied division', () => {
+    expect(slideMode(division('Compound U18 Men'))).toBe('podium')
   })
 })
