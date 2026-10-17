@@ -32,3 +32,21 @@ export interface Scorecard {
   target: string
   ends: EndScore[]
 }
+
+/** One shooting line (a session), keyed by the date and time EOS stamps on archers. */
+export interface LineConfig {
+  key: string
+  label: string
+  tag?: string
+}
+
+export interface EventConfig {
+  year: number
+  name: string
+  dates: string
+  tournamentId: string
+  live: boolean
+  lines: LineConfig[]
+  closedLines: string[]
+  shootOffs: Record<string, string[]>
+}
