@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { EVENT_2025 } from '../config/event'
-import { awardsOrder, podiumSlots, slideMode, stepIndex } from './awards'
+import { awardsOrder, podiumSlots, slideFromHash, slideHash, slideMode, stepIndex } from './awards'
 import { parseScoreList } from './eos-schema'
 import { buildEventView } from './status'
 import type { DivisionView, EventView } from './status'
@@ -145,5 +145,30 @@ describe('slideMode', () => {
 
   it('shows the podium (with its shoot-off state) for a final tied division', () => {
     expect(slideMode(division('Compound U18 Men'))).toBe('podium')
+  })
+})
+
+describe('the slide kept in the URL hash', () => {
+  it('numbers slides from 1, like the on-screen counter', () => {
+    expect(slideHash(0)).toBe('#1')
+    expect(slideHash(47)).toBe('#48')
+  })
+
+  it('resumes the slide the hash names', () => {
+    expect(slideFromHash('#1', 48)).toBe(0)
+    expect(slideFromHash('#30', 48)).toBe(29)
+    expect(slideFromHash('#48', 48)).toBe(47)
+    expect(slideFromHash(slideHash(12), 48)).toBe(12)
+  })
+
+  it.each(['', '#', '#0', '#-3', '#49', '#9999', '#abc', '#3x', '#1.5', '#%20', '3', '#00000012345'])(
+    'starts from the first slide for the hand-typed or stale hash %j',
+    (hash) => {
+      expect(slideFromHash(hash, 48)).toBe(0)
+    },
+  )
+
+  it('starts from the first slide when there are no slides', () => {
+    expect(slideFromHash('#1', 0)).toBe(0)
   })
 })

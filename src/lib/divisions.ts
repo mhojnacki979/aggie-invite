@@ -98,6 +98,23 @@ export function parseDivisionName(raw: string): DivisionName {
   }
 }
 
+/**
+ * How many words in a raw EOS name are not the bow, the age, the gender or a class word. A clean
+ * spelling has none; a typo (`Recurve Senior Senior Female`, `Barebow (Recurve) U13 Recurve Female`) has some.
+ * It reads only the name, so it cannot change while a tournament is being shot.
+ */
+export function strayWordCount(raw: string): number {
+  const trimmed = raw.trim()
+  const bow = findBow(trimmed)
+  if (!bow) return 0
+  const words = trimmed.slice(bow.length).split(/\s+/).filter(Boolean)
+  const hasGender = GENDERS[(words[words.length - 1] ?? '').toLowerCase()] !== undefined
+  const rest = (hasGender ? words.slice(0, -1) : words).filter((w) => !CLASS_WORDS.has(w.toLowerCase()))
+  const age = pickAge(rest)
+  const ageWords = rest.filter((w) => normalizeAge(w) === age).length
+  return rest.length - Math.min(ageWords, 1)
+}
+
 export function compareDivisions(a: DivisionName, b: DivisionName): number {
   for (let i = 0; i < 3; i++) {
     const diff = (a.sortKey[i] ?? 0) - (b.sortKey[i] ?? 0)

@@ -23,7 +23,7 @@ function useNow(running: boolean): number {
 function statusText(config: EventConfig, state: FetchState, now: number): string {
   if (!config.live) {
     if (state.error) return "Couldn't load these results"
-    return state.rows === null ? 'Loading results…' : `Final results · ${config.dates}`
+    return state.rows === null ? 'Loading results…' : 'Final results'
   }
   if (state.error) return 'Reconnecting…'
   if (state.updatedAt === null) return 'Loading scores…'

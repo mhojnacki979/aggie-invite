@@ -21,6 +21,21 @@ export function stepIndex(i: number, n: number, key: string): number {
   return i
 }
 
+/** The URL hash that holds the presenter's place, numbered from 1 like the on-screen "Award N of M". */
+export function slideHash(index: number): string {
+  return `#${index + 1}`
+}
+
+/**
+ * The slide a URL hash points at. A missing, hand-typed or stale hash (one past the end after the
+ * divisions changed) is not a place in this deck, so it starts from the first slide.
+ */
+export function slideFromHash(hash: string, total: number): number {
+  const match = /^#(\d{1,4})$/.exec(hash)
+  const slide = match?.[1] === undefined ? 0 : Number(match[1])
+  return slide >= 1 && slide <= total ? slide - 1 : 0
+}
+
 export type SlideMode = 'provisional' | 'podium'
 
 /**

@@ -1,8 +1,10 @@
 'use client'
 
-import { useEffect, useId, useRef } from 'react'
-import type { ReactNode, RefObject } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
+import type { KeyboardEvent as ReactKeyboardEvent, ReactNode, RefObject } from 'react'
+import { createPortal } from 'react-dom'
 import type { ArcherRow, EndScore, Scorecard } from '@/lib/types'
+import { makeInert } from './inert'
 import './scorecard-modal.css'
 
 /** What the modal is showing right now. `busy` is EOS answering 429. */
@@ -14,7 +16,7 @@ export type CardView =
 export const BUSY_TEXT = 'Scores are busy right now. Tap to try again.'
 export const ERROR_TEXT = "Couldn't load this scorecard. Try again."
 export const LOADING_TEXT = 'Loading scorecard…'
-const EMPTY_TEXT = 'No arrows shot yet.'
+const EMPTY_TEXT = 'No scorecard on file for this archer.'
 
 function Ends({ ends }: { ends: EndScore[] }) {
   return (
@@ -71,9 +73,43 @@ function Stat({ label, value }: { label: string; value: ReactNode }) {
   )
 }
 
-/** Escape closes; focus moves in on open and back to whatever opened it on close; the page behind stays put. */
-function useDialogBehavior(onClose: () => void): RefObject<HTMLButtonElement | null> {
-  const closeRef = useRef<HTMLButtonElement>(null)
+const FOCUSABLE = 'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])'
+
+/** Tab and Shift+Tab wrap inside the dialog instead of walking out to the page behind it. */
+function trapTab(event: ReactKeyboardEvent<HTMLElement>, dialog: HTMLElement): void {
+  if (event.key !== 'Tab') return
+  const items = Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE))
+  const first = items[0]
+  const last = items[items.length - 1]
+  if (!first || !last) {
+    event.preventDefault()
+    return
+  }
+  const active = document.activeElement
+  const outside = !dialog.contains(active)
+  if (event.shiftKey && (active === first || outside)) {
+    event.preventDefault()
+    last.focus()
+  } else if (!event.shiftKey && (active === last || outside)) {
+    event.preventDefault()
+    first.focus()
+  }
+}
+
+interface DialogRefs {
+  overlay: RefObject<HTMLDivElement | null>
+  dialog: RefObject<HTMLDivElement | null>
+  close: RefObject<HTMLButtonElement | null>
+}
+
+/**
+ * Escape closes; focus moves in on open and back to whatever opened it on close; the page behind
+ * stays put and is made inert, so neither Tab nor a screen reader can reach it.
+ */
+function useDialogBehavior(onClose: () => void): DialogRefs {
+  const overlay = useRef<HTMLDivElement>(null)
+  const dialog = useRef<HTMLDivElement>(null)
+  const close = useRef<HTMLButtonElement>(null)
   // Read through a ref so a new onClose each render does not re-run the effect and re-grab focus.
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
@@ -81,18 +117,41 @@ function useDialogBehavior(onClose: () => void): RefObject<HTMLButtonElement | n
     const opener = document.activeElement
     const overflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    closeRef.current?.focus()
+    const restoreBehind = makeInert(Array.from(document.body.children).filter((element) => element !== overlay.current))
+    close.current?.focus()
     const onKey = (event: KeyboardEvent): void => {
       if (event.key === 'Escape') onCloseRef.current()
     }
     document.addEventListener('keydown', onKey)
     return () => {
       document.removeEventListener('keydown', onKey)
+      restoreBehind()
       document.body.style.overflow = overflow
       if (opener instanceof HTMLElement) opener.focus()
     }
   }, [])
-  return closeRef
+  return { overlay, dialog, close }
+}
+
+function announcement(view: CardView): string {
+  if (view.kind === 'loading') return LOADING_TEXT
+  if (view.kind === 'error') return view.busy ? BUSY_TEXT : ERROR_TEXT
+  return ''
+}
+
+/**
+ * Says the loading and error states aloud. The region is mounted empty and filled afterwards,
+ * because screen readers announce a live region's changes, not what it held when it appeared.
+ */
+function Announcer({ view }: { view: CardView }) {
+  const [said, setSaid] = useState('')
+  const text = announcement(view)
+  useEffect(() => setSaid(text), [text])
+  return (
+    <p className="sc-sr" role="status">
+      {said}
+    </p>
+  )
 }
 
 interface ModalProps {
@@ -107,16 +166,25 @@ interface ModalProps {
 /** One archer's end-by-end scorecard over the board. Total, 10s and 9s come from the board row. */
 export function ScorecardModal({ row, subtitle, view, onClose, onRetry }: ModalProps) {
   const titleId = useId()
-  const closeRef = useDialogBehavior(onClose)
-  return (
+  const refs = useDialogBehavior(onClose)
+  // Rendered into <body> so the whole page (header, main, footer) can be made inert behind it.
+  return createPortal(
     <div
+      ref={refs.overlay}
       className="sc-overlay"
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose()
       }}
     >
-      <div className="sc-dialog" role="dialog" aria-modal="true" aria-labelledby={titleId}>
-        <button ref={closeRef} type="button" className="sc-close" onClick={onClose} aria-label="Close scorecard">
+      <div
+        ref={refs.dialog}
+        className="sc-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        onKeyDown={(event) => refs.dialog.current && trapTab(event, refs.dialog.current)}
+      >
+        <button ref={refs.close} type="button" className="sc-close" onClick={onClose} aria-label="Close scorecard">
           ×
         </button>
         <h2 id={titleId} className="sc-name">
@@ -128,8 +196,10 @@ export function ScorecardModal({ row, subtitle, view, onClose, onRetry }: ModalP
           <Stat label="10s" value={row.tens} />
           <Stat label="9s" value={row.nines} />
         </div>
+        <Announcer view={view} />
         <Body view={view} onRetry={onRetry} />
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

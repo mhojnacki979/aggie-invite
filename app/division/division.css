@@ -201,4 +201,10 @@
   .dv-nines {
     display: none;
   }
+
+  /* 9s is hidden here, so 10s is the last visible column and takes the card-edge padding. */
+  .dv-table th:nth-last-child(2),
+  .dv-table td:nth-last-child(2) {
+    padding-right: 12px;
+  }
 }

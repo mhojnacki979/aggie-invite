@@ -1,4 +1,4 @@
-import type { Scorecard } from './types'
+import type { EventConfig, Scorecard } from './types'
 
 export interface LoadCache<T> {
   /** The settled, unexpired value for `key`, or undefined when there is none. */
@@ -55,6 +55,11 @@ export function createLoadCache<T>(now: () => number = Date.now): LoadCache<T> {
 
 /** A live archer gains an end every few minutes, so a live scorecard is only good for this long. */
 export const SCORECARD_TTL_MS = 60_000
+
+/** How long a scorecard stays good: a live event's for a minute, a finished one's (our own saved JSON) for the session. */
+export function scorecardTtl(config: Pick<EventConfig, 'live'>): number | undefined {
+  return config.live ? SCORECARD_TTL_MS : undefined
+}
 
 /**
  * Scorecards fetched this session, shared by every division board. EOS allows 60 calls a minute

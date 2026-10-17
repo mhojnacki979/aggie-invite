@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { compareDivisions, parseDivisionName } from './divisions'
+import { compareDivisions, parseDivisionName, strayWordCount } from './divisions'
 import { parseScoreList } from './eos-schema'
 
 function loadFixture(name: string): unknown {
@@ -90,5 +90,22 @@ describe('2022 Double FITA fixture', () => {
     const parsed = [...new Set(rows.map((r) => r.division))].map(parseDivisionName)
     expect(parsed.length).toBe(43)
     expect(parsed.filter((d) => !d.known).map((d) => d.label)).toEqual([])
+  })
+})
+
+describe('strayWordCount', () => {
+  it('is zero for a clean spelling, with or without a class word', () => {
+    expect(strayWordCount('Compound Senior Male')).toBe(0)
+    expect(strayWordCount('Barebow (Recurve) U13 Bowman Female')).toBe(0)
+    expect(strayWordCount('Fixed Pin U18 Cadet Male')).toBe(0)
+  })
+
+  it('counts a stray bow word and a repeated age', () => {
+    expect(strayWordCount('Barebow (Recurve) U13 Recurve Female')).toBe(1)
+    expect(strayWordCount('Recurve Senior Senior Female')).toBe(1)
+  })
+
+  it('is zero for a name that is not a known bow', () => {
+    expect(strayWordCount('Something Else Entirely')).toBe(0)
   })
 })

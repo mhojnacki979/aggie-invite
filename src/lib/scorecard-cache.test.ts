@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { SCORECARD_TTL_MS, cardKey, createLoadCache } from './scorecard-cache'
+import { SCORECARD_TTL_MS, cardKey, createLoadCache, scorecardTtl } from './scorecard-cache'
 
 describe('createLoadCache', () => {
   it('serves a repeat ask from the cache without calling the loader again', async () => {
@@ -101,5 +101,15 @@ describe('createLoadCache with a TTL', () => {
 describe('cardKey', () => {
   it('joins the scope and the shooter', () => {
     expect(cardKey('2025', 'abc')).toBe('2025|abc')
+  })
+})
+
+describe('scorecardTtl', () => {
+  it('expires a live event scorecard after a minute', () => {
+    expect(scorecardTtl({ live: true })).toBe(SCORECARD_TTL_MS)
+  })
+
+  it('keeps a finished event scorecard for the session', () => {
+    expect(scorecardTtl({ live: false })).toBeUndefined()
   })
 })

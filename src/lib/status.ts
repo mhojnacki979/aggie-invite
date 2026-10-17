@@ -1,4 +1,4 @@
-import { compareDivisions, parseDivisionName, slugify } from './divisions'
+import { compareDivisions, parseDivisionName, slugify, strayWordCount } from './divisions'
 import type { DivisionName } from './divisions'
 import { OTHER_LINE_KEY, deriveLines, lineKeyFor } from './schedule'
 import type { ArcherRow, EventConfig, LineConfig } from './types'
@@ -137,11 +137,20 @@ function buildDivision(
   }
 }
 
+/** Cleanest raw spelling first: fewest stray words, then the lower raw name. */
+function byCleanSpelling(a: DivisionView, b: DivisionView): number {
+  const diff = strayWordCount(a.name) - strayWordCount(b.name)
+  if (diff !== 0) return diff
+  // A plain comparison, not localeCompare, so the order cannot vary with the environment's locale.
+  return a.name < b.name ? -1 : a.name > b.name ? 1 : 0
+}
+
 /**
  * Two raw EOS names can parse to one label and slug (typos in the tournament's own division names).
- * The division with the most archers shooting keeps the clean label and slug; each other one
- * (ties broken by raw name, so builds agree) is shown under its raw EOS name and a slug made from it,
- * so every board stays reachable. A no-op when nothing collides.
+ * The division whose raw name is the cleanest spelling keeps the clean label and slug (fewest stray
+ * words, then the lower raw name); each other one is shown under its raw EOS name and a slug made from it,
+ * so every board stays reachable. The choice reads only the names, never the scores: a bookmarked
+ * link must keep opening the same board while arrows land. A no-op when nothing collides.
  */
 function separateCollisions(divisions: DivisionView[]): DivisionView[] {
   const bySlug = new Map<string, DivisionView[]>()
@@ -150,7 +159,7 @@ function separateCollisions(divisions: DivisionView[]): DivisionView[] {
   }
   const renamed = new Set<DivisionView>()
   for (const group of bySlug.values()) {
-    const ranked = [...group].sort((a, b) => b.shot - a.shot || a.name.localeCompare(b.name))
+    const ranked = [...group].sort(byCleanSpelling)
     for (const other of ranked.slice(1)) renamed.add(other)
   }
   return divisions.map((division) =>

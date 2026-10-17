@@ -1,12 +1,14 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { CSSProperties } from 'react'
 import { CURRENT_EVENT, SCORING_SOON_NOTE } from '@/config/event'
-import { awardsOrder, podiumSlots, slideMode, stepIndex } from '@/lib/awards'
+import { awardsOrder, podiumSlots, slideFromHash, slideHash, slideMode, stepIndex } from '@/lib/awards'
 import type { PlaceSlot } from '@/lib/awards'
 import { buildEventView } from '@/lib/status'
 import type { DivisionView } from '@/lib/status'
 import { isUnconfigured, useEventData } from '@/lib/use-event-data'
+import { makeInert } from '../components/inert'
 import { ordinal } from '../home/format'
 import './awards.css'
 
@@ -15,7 +17,7 @@ const SHOOT_OFF_NOTE = 'Same score, 10s and 9s: shoot-off needed'
 const SCREEN_ORDER = [1, 0, 2] as const
 
 function PlaceBody({ slot }: { slot: PlaceSlot }) {
-  if (slot.kind === 'covered') return <p className="aw-hold">Decided by the shoot-off</p>
+  if (slot.kind === 'covered') return <p className="aw-hold">Pending shoot-off</p>
   if (slot.kind === 'empty') return <p className="aw-hold">No archer</p>
   return (
     <>
@@ -32,9 +34,15 @@ function PlaceBody({ slot }: { slot: PlaceSlot }) {
   )
 }
 
+/** Four or more archers on one card need a smaller type step; `--n` lets the type shrink with the count. */
+const MANY_ARCHERS = 4
+
 function PlaceCard({ slot }: { slot: PlaceSlot }) {
+  const count = slot.archers.length
+  const many = count >= MANY_ARCHERS
+  const style: CSSProperties & { '--n'?: number } = many ? { '--n': count } : {}
   return (
-    <li className={`aw-place aw-place-${slot.place} aw-${slot.kind}`}>
+    <li className={`aw-place aw-place-${slot.place} aw-${slot.kind}${many ? ' aw-many' : ''}`} style={style}>
       <span className={`aw-medal aw-medal-${slot.place}`}>{slot.place}</span>
       <PlaceBody slot={slot} />
     </li>
@@ -84,7 +92,10 @@ function Slide({ division, index, total }: { division: DivisionView; index: numb
 
 /** Moves between slides with a clicker (arrows, space, page keys) or a click, and returns the current one. */
 function useStepper(total: number): [number, () => void] {
-  const [index, setIndex] = useState(0)
+  // Ceremony only mounts once scores have loaded on the client, so reading the hash here cannot mismatch the server render.
+  const [index, setIndex] = useState(() => slideFromHash(window.location.hash, total))
+  // Keep the place in the URL, so a reload resumes the same slide.
+  useEffect(() => window.history.replaceState(null, '', slideHash(index)), [index])
   useEffect(() => {
     const onKey = (event: KeyboardEvent): void => {
       if (event.ctrlKey || event.metaKey || event.altKey) return
@@ -121,11 +132,17 @@ function Ceremony({ divisions }: { divisions: DivisionView[] }) {
   )
 }
 
+/** The site's header and footer sit behind the overlay; keep Tab and a stray Enter from reaching their links. */
+function useInertChrome(): void {
+  useEffect(() => makeInert(Array.from(document.querySelectorAll('.site-header, .site-footer'))), [])
+}
+
 /**
  * The Sunday awards ceremony: one division per slide, projected and stepped through with a clicker.
  * It covers the site's header and footer, and nothing links here; you reach it by typing the URL.
  */
 export function AwardsView() {
+  useInertChrome()
   const state = useEventData(CURRENT_EVENT)
   const divisions = useMemo(
     () => awardsOrder(buildEventView(state.rows ?? [], CURRENT_EVENT)),

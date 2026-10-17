@@ -31,7 +31,7 @@ function usePreviewRows(rows: ArcherRow[] | null, config: EventConfig, preview: 
 }
 
 function Podiums({ divisions, config, embedded }: { divisions: DivisionView[]; config: EventConfig; embedded: boolean }) {
-  const Heading = embedded ? 'h3' : 'h2'
+  const Tag = embedded ? 'h3' : 'h2'
   // Several boards can share a page (2022), so the heading id carries the tournament.
   const headingId = `podiums-heading-${config.slug}`
   const shown = divisions.filter((division) => division.shot > 0)
@@ -39,12 +39,17 @@ function Podiums({ divisions, config, embedded }: { divisions: DivisionView[]; c
   const allFinal = shown.every((division) => division.status === 'final')
   return (
     <section aria-labelledby={headingId}>
-      <Heading id={headingId} className="section-title">
+      <Tag id={headingId} className="section-title">
         {allFinal ? 'Final podiums' : 'Podiums so far'}
-      </Heading>
+      </Tag>
       <div className="pod-grid">
         {shown.map((division) => (
-          <PodiumCard key={division.name} division={division} href={divisionHref(config, division.display.slug)} />
+          <PodiumCard
+            key={division.name}
+            division={division}
+            href={divisionHref(config, division.display.slug)}
+            titleTag={embedded ? 'h4' : 'h3'}
+          />
         ))}
       </div>
     </section>
@@ -72,10 +77,12 @@ function loadingText(config: EventConfig, state: FetchState): string {
  */
 function Board({ config, state, view, embedded }: { config: EventConfig; state: FetchState; view: EventView; embedded: boolean }) {
   if (!isUnconfigured(config) && state.rows === null) return <p className="muted">{loadingText(config, state)}</p>
+  // Several boards on one page (2022) would repeat the same landmark names, so each says which section it is.
+  const scope = embedded ? config.sectionLabel : null
   return (
     <>
-      {view.lines.length > 0 && <LineStrip lines={view.lines} />}
-      <ArcherSearch view={view} config={config} />
+      {view.lines.length > 0 && <LineStrip lines={view.lines} scope={scope} />}
+      <ArcherSearch view={view} config={config} scope={scope} />
       <Podiums divisions={view.divisions} config={config} embedded={embedded} />
     </>
   )

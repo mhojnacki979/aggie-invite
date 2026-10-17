@@ -1,9 +1,10 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { YEARS, archiveConfigs } from '../config/event'
+import { CURRENT_EVENT, YEARS, archiveConfigs } from '../config/event'
 import type { FrozenEvent } from './frozen'
 import { buildEventView } from './status'
 import type { EventView } from './status'
+import type { ArcherRow } from './types'
 
 /** The real saved results, so these tests see the typos EOS actually holds. */
 function viewOf(slug: string): EventView {
@@ -41,11 +42,16 @@ describe('divisions whose raw names parse to the same slug', () => {
     expect(boards).toEqual([recurve])
   })
 
-  it('makes Amelia White reachable, on exactly one board', () => {
+  it('makes Amelia White reachable: her own slug opens her own board, not the Bowman one', () => {
     const boards = view.divisions.filter((d) => d.rows.some((row) => row.name === 'Amelia White'))
     expect(boards).toHaveLength(1)
     expect(boards[0]).toBe(recurve)
     expect(boards[0]?.rows.find((row) => row.name === 'Amelia White')?.total).toBe(199)
+    // Resolve the slug the way the division board does: the first division carrying it.
+    const opened = view.divisions.find((d) => d.display.slug === recurve?.display.slug)
+    expect(opened).toBe(recurve)
+    expect(opened?.rows.some((row) => row.name === 'Amelia White')).toBe(true)
+    expect(bowman?.rows.some((row) => row.name === 'Amelia White')).toBe(false)
   })
 
   it('leaves a division nobody shot in uncarded: shot stays 0 for the Senior Senior typo', () => {
@@ -68,5 +74,45 @@ describe('years where nothing collides', () => {
     const view = viewOf(slug)
     expect(new Set(slugsOf(view)).size).toBe(view.divisions.length)
     expect(view.divisions.every((d) => d.display.label === `${d.display.bow} ${d.display.age} ${d.display.gender ?? ''}`.replace(/ +/g, ' ').trim())).toBe(true)
+  })
+})
+
+function archer(id: string, division: string, arrowsShot: number): ArcherRow {
+  return {
+    shooterId: id, name: id, division, rank: 1, rounds: [arrowsShot], total: arrowsShot, tens: 0, nines: 0,
+    target: '1A', session: '', arrowsShot, arrowsDue: 60, avg: '0',
+  }
+}
+
+describe('which colliding division keeps the clean slug', () => {
+  const CLEAN = 'Barebow (Recurve) U13 Bowman Female'
+  const TYPO = 'Barebow (Recurve) U13 Recurve Female'
+  const config = archiveConfigs(2023)[0]!
+  const owner = (rows: ArcherRow[]): string | undefined =>
+    buildEventView(rows, config).divisions.find((d) => d.display.slug === 'barebow-u13-women')?.name
+
+  it('does not move as arrows land: the typo with more archers shooting never takes the clean slug', () => {
+    expect(owner([archer('a', CLEAN, 3), archer('b', TYPO, 30), archer('c', TYPO, 30)])).toBe(CLEAN)
+    expect(owner([archer('a', CLEAN, 30), archer('b', TYPO, 3)])).toBe(CLEAN)
+    expect(owner([archer('a', CLEAN, 0), archer('b', TYPO, 60), archer('c', TYPO, 60)])).toBe(CLEAN)
+  })
+
+  it('breaks an equal-spelling tie by raw name, whatever the order or the scores', () => {
+    const first = 'Compound Senior Male'
+    const second = 'compound senior male '
+    // Both parse to Compound Senior Men with no stray words; the lower raw name wins.
+    const lower = first < second ? first : second
+    const upper = first < second ? second : first
+    const crowded = [archer('a', upper, 50), archer('b', upper, 50), archer('c', lower, 1)]
+    const ownerOf = (rows: ArcherRow[]): string | undefined =>
+      buildEventView(rows, config).divisions.find((d) => d.display.slug === 'compound-senior-men')?.name
+    expect(ownerOf(crowded)).toBe(lower)
+    expect(ownerOf([...crowded].reverse())).toBe(lower)
+  })
+})
+
+describe('the current event', () => {
+  it('is not marked finished, so its lines are derived from the data and ?preview= still works', () => {
+    expect(CURRENT_EVENT.finished).toBeUndefined()
   })
 })

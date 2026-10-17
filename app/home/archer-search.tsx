@@ -39,13 +39,13 @@ function ResultRow({ hit, config }: { hit: ArcherHit; config: EventConfig }) {
 }
 
 /** Find an archer by name; each result opens that archer's division board. */
-export function ArcherSearch({ view, config }: { view: EventView; config: EventConfig }) {
+export function ArcherSearch({ view, config, scope = null }: { view: EventView; config: EventConfig; scope?: string | null }) {
   const [query, setQuery] = useState('')
   const inputId = useId()
   const hits = useMemo(() => searchArchers(view, query, RESULT_LIMIT), [view, query])
   const searching = query.trim().length >= MIN_QUERY
   return (
-    <section className="search" aria-label="Find an archer">
+    <section className="search" aria-label={scope ? `Find an archer: ${scope}` : 'Find an archer'}>
       <label htmlFor={inputId} className="search-label">
         Find an archer
       </label>

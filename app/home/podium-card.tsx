@@ -11,14 +11,14 @@ function footerLines(division: DivisionView): string[] {
 }
 
 /** The top three so far in one division, tied archers sharing a medal. Tapping the card opens the full board. */
-export function PodiumCard({ division, href }: { division: DivisionView; href: string }) {
+export function PodiumCard({ division, href, titleTag: Title }: { division: DivisionView; href: string; titleTag: 'h3' | 'h4' }) {
   return (
     <article className="pod">
-      <h3 className="pod-title">
+      <Title className="pod-title">
         <Link href={href} className="pod-link">
           {division.display.label}
         </Link>
-      </h3>
+      </Title>
       <DivisionBadge division={division} />
       <ol className="pod-rows">
         {division.podium.map((row) => (

@@ -10,12 +10,13 @@ const PILL_TEXT: Record<LineStatus, string> = {
   final: 'Final',
 }
 
-function LineCard({ line }: { line: LineView }) {
+function LineCard({ line, reserveTag }: { line: LineView; reserveTag: boolean }) {
   const end = Math.min(line.endsShot, ENDS_PER_LINE)
   return (
     <li className={`line line-${line.status}`}>
       <b className="line-label">{line.label}</b>
-      {line.tag && <span className="line-tag">{line.tag}</span>}
+      {/* When any card in the strip has a tag, the rest keep an empty row so every status pill sits level. */}
+      {line.tag ? <span className="line-tag">{line.tag}</span> : reserveTag && <span className="line-tag" aria-hidden="true">&nbsp;</span>}
       {line.archers > 0 && <span className="line-count">{archerCount(line.archers)}</span>}
       <span className="pill">{PILL_TEXT[line.status]}</span>
       {line.status === 'shooting' && (
@@ -33,11 +34,12 @@ function LineCard({ line }: { line: LineView }) {
 }
 
 /** The shooting lines in order, each with its state: upcoming, shooting now, or final. */
-export function LineStrip({ lines }: { lines: LineView[] }) {
+export function LineStrip({ lines, scope = null }: { lines: LineView[]; scope?: string | null }) {
+  const reserveTag = lines.some((line) => line.tag)
   return (
-    <ul className="lines" aria-label="Shooting lines">
+    <ul className="lines" aria-label={scope ? `Shooting lines: ${scope}` : 'Shooting lines'}>
       {lines.map((line) => (
-        <LineCard key={line.key} line={line} />
+        <LineCard key={line.key} line={line} reserveTag={reserveTag} />
       ))}
     </ul>
   )

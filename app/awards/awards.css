@@ -159,6 +159,24 @@
   font-size: clamp(26px, min(3.6vw, 5.4vh), 64px);
 }
 
+/* Four or more archers share the card (ranks 1, 2, 3, 3 puts four on 3rd), so the type shrinks with
+   --n (the archer count) until they fit: the three-way sizes above, scaled by 2.8 / n. */
+.aw-many .aw-archers {
+  gap: 0.25em;
+}
+
+.aw-many .aw-medal {
+  font-size: clamp(14px, 2vw, 30px);
+}
+
+.aw-many .aw-name {
+  font-size: clamp(11px, calc(min(2.6vw, 4vh) * 2.8 / var(--n)), 42px);
+}
+
+.aw-many .aw-score {
+  font-size: clamp(16px, calc(min(3.6vw, 5.4vh) * 2.8 / var(--n)), 64px);
+}
+
 .aw-covered,
 .aw-empty {
   background: #ffffff26;
