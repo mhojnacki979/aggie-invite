@@ -408,7 +408,7 @@ Board:
 - An unknown slug shows `Division not found` with a link home.
 
 Scorecard modal (its EOS call shares the same 60/min budget as the board's polling, so it must not be tappable into a storm):
-- Cache a fetched scorecard per `(slug | tournamentId, shooterId)` for the session and serve repeat taps from the cache with no request.
+- Cache a fetched scorecard per `(slug | tournamentId, shooterId)`. **A frozen year caches indefinitely** — that JSON can never change. **A live event caches for `SCORECARD_TTL_MS = 60_000` only**, because an archer's card grows by an end every few minutes and serving a session-long cache would show a parent their archer's score from an hour ago as if it were current. After the TTL a tap refetches; within it, it is served from cache with no request.
 - De-duplicate in flight: tapping the same archer twice issues one request, and the row is not re-tappable while its request is open.
 - Catch every rejection. An `EosHttpError` with `status === 429` renders `Scores are busy right now. Tap to try again.`; any other failure renders the generic error text. Never leave an unhandled promise rejection.
 
