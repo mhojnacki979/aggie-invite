@@ -17,6 +17,24 @@ const envelopeSchema = z.object({
   data: z.unknown(),
 })
 
+/** A non-2xx HTTP answer (a proxy 502, a 429 rate limit). Carries what a retry loop needs. */
+export class EosHttpError extends Error {
+  constructor(
+    readonly status: number,
+    readonly endpoint: string,
+    /** From the Retry-After header, when EOS sent one and the browser exposes it. */
+    readonly retryAfterMs: number | null,
+  ) {
+    super(`EOS ${endpoint} failed with HTTP ${status}`)
+    this.name = 'EosHttpError'
+  }
+}
+
+function retryAfterMs(res: Response): number | null {
+  const seconds = Number(res.headers.get('Retry-After'))
+  return Number.isFinite(seconds) && seconds > 0 ? seconds * 1000 : null
+}
+
 /** Unwrap the EOS envelope: throw its message unless status_code is 200. */
 async function readEnvelope(res: Response): Promise<unknown> {
   const json: unknown = await res.json()
@@ -34,6 +52,8 @@ async function post(path: string, headers: Record<string, string>, body?: string
     body,
     signal: AbortSignal.timeout(TIMEOUT_MS),
   })
+  // A proxy 502 or a 429 page is HTML, not JSON: name the failure before parsing.
+  if (!res.ok) throw new EosHttpError(res.status, path.split('?')[0] ?? path, retryAfterMs(res))
   return readEnvelope(res)
 }
 
