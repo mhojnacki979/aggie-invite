@@ -21,11 +21,13 @@
 - Every EOS fetch has a 15-second timeout.
 - Colors: maroon `#500000`, gold `#d9a521`, silver `#bfc3cc`, bronze `#c27a3a`. Fonts: Roboto Slab (headings), Work Sans (body), tabular numbers for scores.
 - Text wordmark "Aggie Invitational". No Texas A&M logo. Footer "Scores by Eyes on Score".
-- Exact copy: `Provisional`, `Final`, `Shooting now`, `Upcoming`, `End {n} of 20`, `{n} of {m} still to shoot`, `Tie for {1st|2nd|3rd}`, `Same score, 10s and 9s: shoot-off needed`, `JOAD line`, `2026 live scoring starts Fri, Nov 6 at 6:00 PM`.
+- Exact copy: `Provisional`, `Final`, `Shooting now`, `Upcoming`, `End {n} of {ends}` (`ends` = `arrowsDue / 3`: 20 for a 60-arrow round, 40 for the 2022 Double FITA), `{n} of {m} still to shoot`, `Tie for {1st|2nd|3rd}`, `Same score, 10s and 9s: shoot-off needed`, `JOAD line`, `2026 live scoring starts Fri, Nov 6 at 6:00 PM`.
 - Works at 375px wide with no horizontal page scroll. Light theme by default. A dark theme follows `prefers-color-scheme`.
 - Commit messages: plain sentence subject plus a short body, matching the sibling repos. No ticket prefix, no Co-Authored-By trailer.
 - Live and tested by Sun Nov 1, 2026. Dry run Nov 2–5. Event Nov 6–8.
 - **Never push without Michael's explicit OK.** Pushing to `main` deploys the live site.
+
+**Amendment A (2026-10-17, Michael):** the site covers EVERY year EOS holds — 2022, 2023, 2024, 2025 — with a year tab switcher. 2022 is two separate tournaments (a 120-arrow/4-round Double FITA and a 60-arrow JOAD event) shown as two sections under one 2022 tab. This supersedes the "Past results cover 2023–2025, not 2022" call. Task 12 amends the already-built data layer; Tasks 4, 7, 8 and 9 below carry the changes. Where this amendment and an older line disagree, the amendment wins.
 
 ## Review Focus
 
@@ -223,14 +225,13 @@ Implement the spec's "Rules for status" exactly:
 
 `cutAt` is for preview and tests only:
 - Rows on lines before `lineIndex` are unchanged.
-- Rows on later lines, or the Other line, get `arrowsShot`, `half1`, `half2`, `total`, `tens` and `nines` set to 0.
-- Rows on line `lineIndex` get `shot = min(row.arrowsShot, end * 3)`:
-  - `half1` stays the same if `shot >= 30`. Otherwise it becomes `round(half1 * shot / 30)`.
-  - `half2` becomes 0 if `shot <= 30`. Otherwise it becomes `round(half2 * (shot - 30) / 30)`.
-  - `total = half1 + half2`. `tens` and `nines` are scaled by `shot / row.arrowsShot`.
+- Rows on later lines, or the Other line, get `arrowsShot`, `total`, `tens` and `nines` set to 0 and every entry of `rounds` set to 0.
+- Rows on line `lineIndex` get `shot = min(row.arrowsShot, end * 3)`, then, with `per = row.arrowsDue / row.rounds.length` (30 for every real event):
+  - round `i` keeps `round(rounds[i] * clamp(shot - i * per, 0, per) / per)`. So a full round is untouched, an unstarted round is 0, and the round in progress is scaled.
+  - `total` is the sum of the scaled `rounds`. `tens` and `nines` are scaled by `shot / row.arrowsShot`.
 - Then re-rank each division by total, tens, then nines, all descending, with competition ranking (1, 1, 3). This re-ranking is allowed only because preview is a simulation.
 
-`parsePreview` accepts `'^\d+-\d+$'` with `end` from 0 to 20. Anything else returns `null`.
+`parsePreview` accepts `'^\d+-\d+$'` with `end` from 0 to 20. Anything else returns `null`. (Preview only ever runs against the live 60-arrow event, so 20 is the right cap here.)
 
 - [ ] **Step 1: Write the failing tests.** `rows` is the parsed fixture and `cfg` is `EVENT_2025`.
   1. **Full 2025:** line statuses are all `'final'`, and line `archers` are `[100, 105, 101, 102, 104]`. Every division is `'final'`, and there are 49 divisions. The Sunday line has 9 no-shows and still reads final.
@@ -350,7 +351,7 @@ What `scripts/freeze.ts <year>` does:
 - Produces: `HomeView({ config, note }: { config: EventConfig; note: string | null })`, a client component that Task 9 reuses. Division links use `/division/?d=${slug}` plus `&y=${year}` when the config is not live.
 
 Layout and copy:
-- **Header:** a maroon band with the wordmark "Aggie Invitational" in Roboto Slab 700. Nav links are `Live` (`/`) and `Past years` (`/past/2025/`).
+- **Header:** a maroon band with the wordmark "Aggie Invitational" in Roboto Slab 700, and under it a year tab strip (Task 12's `YearTabs`): one tab per entry in `YEARS`, newest first, the current one marked `aria-current="page"`. The live year's tab reads `2026` once `CURRENT_EVENT` is 2026, and `2025` until then.
 - **Fonts:** load them with `next/font/google` (`Roboto_Slab`, `Work_Sans`), as the reference layout does.
 - **Home:**
   1. Title `config.name`, with meta `${config.dates} · PEAP, College Station`.
@@ -369,7 +370,7 @@ Layout and copy:
 - [ ] **Step 2: Run** `pnpm typecheck && pnpm build`. Expected: build succeeds and `out/index.html` exists.
 - [ ] **Step 3: Verify in the browser.** Run `preview_start { name: 'aggie-dev' }`.
   - At 1280px and at 375px (the `mobile` preset), in light and dark: the five lines read Final. The 2026 note shows. The Compound U18 Men card shows `Tie for 1st`. `document.documentElement.scrollWidth <= document.documentElement.clientWidth` at 375px.
-  - `/?preview=2-12`: Sat 1:00 PM reads `Shooting now · End 12 of 20 · JOAD line`, Sat 6 PM and Sun 9 AM read `Upcoming`, and Recurve Senior Men reads `Provisional · 15 of 30 still to shoot`.
+  - `/?preview=2-12`: Sat 1:00 PM reads `Shooting now · End 12 of 20 · JOAD line` (60-arrow event, so `ends` is 20), Sat 6 PM and Sun 9 AM read `Upcoming`, and Recurve Senior Men reads `Provisional · 15 of 30 still to shoot`.
   - Network: one `tournament_score_list` request at load, one about every 20s after that, and none while the tab is hidden.
   - Console: no errors.
   - Take a screenshot for Michael.
@@ -387,8 +388,8 @@ Layout and copy:
 
 Board:
 - A `← All divisions` link, the label, a status badge, and `{count} archers`.
-- Columns: `#`, `Archer` (name, with `{line label} · {target}` underneath, and the line tag when set), `1st 30`, `2nd 30`, `Total`, `10s`, `9s`.
-- Under 480px, hide `1st 30`, `2nd 30` and `9s`.
+- Columns: `#`, `Archer` (name, with `{line label} · {target}` underneath, and the line tag when set), one column per round, `Total`, `10s`, `9s`. Round columns come from the division's own `rounds.length`: two rounds are headed `1st 30` and `2nd 30`; any other count is headed `R1`, `R2`, … (the 2022 Double FITA shows four). Derive the count from the first row with arrows, falling back to 2.
+- Under 480px, hide the per-round columns and `9s`.
 - Rows with 0 arrows show `—` and are muted.
 - `a` highlights that archer's row and scrolls to it.
 - An unknown slug shows `Division not found` with a link home.
@@ -411,25 +412,28 @@ Scorecard modal:
 
 ---
 
-### Task 9: Past results (2023–2025)
+### Task 9: Past results (2022–2025)
 
 **Files:**
 - Create: `app/past/[year]/page.tsx`
-- Create (generated): `public/data/2024.json`, `public/data/2024-cards.json`, `public/data/2023.json`, `public/data/2023-cards.json`
+- Create (generated): `public/data/{2025,2024,2023,2022-double-fita,2022-joad}.json` and the matching `-cards.json`
 
 **Interfaces:**
-- Consumes: `HomeView` (Task 7), `ARCHIVE`, `archiveConfig` (Task 3), `loadFrozen` (Task 6).
-- `generateStaticParams` returns `ARCHIVE` years as strings.
-- The page renders `HomeView` with `archiveConfig(year)` and `note: null`. Lines come from `deriveLines`.
-- Add a year switcher to the page: links for 2025, 2024 and 2023.
+- Consumes: `HomeView` (Task 7), `YEARS`, `archiveConfigs` (Task 12), `loadFrozen` (Task 6).
+- `generateStaticParams` returns every `YEARS` entry's year as a string.
+- For a year with ONE tournament, the page renders `HomeView` exactly as the live page does, with that tournament's archive config and `note: null`. Lines come from `deriveLines`.
+- For a year with MORE than one tournament (2022), the page renders one `HomeView` per tournament in `YEARS` order, each under an `<h2>` naming it (`Double FITA · 120 arrows`, `JOAD · 60 arrows`) and each with its own line strip and podiums. Division links carry `&t=<slug>` so Task 8 loads the right tournament.
+- The year tab strip comes from Task 12's `YearTabs`, so it is identical on every page.
 
-- [ ] **Step 1: Run** `pnpm freeze 2024 && pnpm freeze 2023`. Expected: `2024: 517 archers, …` and `2023: 493 archers, …`.
-- [ ] **Step 2: Build the page.** Run `pnpm build`, and check that `out/past/2024/index.html` exists.
+- [ ] **Step 1: Freeze the archive.** Run `pnpm freeze` for each archive slug. Expected: `2025: 512 archers, 468 scorecards`, `2024: 517 archers, …`, `2023: 493 archers, …`, `2022-double-fita: 204 archers, …`, `2022-joad: 104 archers, …`.
+- [ ] **Step 2: Build the page.** Run `pnpm build`, and check that `out/past/2024/index.html` and `out/past/2022/index.html` exist.
 - [ ] **Step 3: Verify in the browser.**
   - `/past/2024/` shows six derived lines, starting with `Fri 1:00 PM`, and the 2024 podiums. Its division labels read `Compound U15 Men`, not `Compound U15 Cub Male`.
-  - Tapping an archer opens a scorecard with no request to `api.eyesonscore.com`.
-  - `/past/2025/` matches the home page.
-- [ ] **Step 4: Commit**: `"Past results for 2023, 2024 and 2025 from frozen snapshots"`
+  - `/past/2022/` shows BOTH sections. The Double FITA board has four round columns and its champion reads `Sawyer Sullivan 1185`; the JOAD board has two round columns and its champion reads `Ryan Booth 583`. No division shows a raw lowercase name.
+  - Tapping an archer on any archive year opens a scorecard with no request to `api.eyesonscore.com`.
+  - The year tabs switch between 2022, 2023, 2024 and 2025, and the current year's tab is marked.
+  - At 375px there is no horizontal page scroll on `/past/2022/`.
+- [ ] **Step 4: Commit**: `"Past results for 2022 through 2025 with a year tab switcher"`
 
 ---
 
@@ -469,3 +473,53 @@ Scorecard modal:
 - [ ] **Step 3: Implement** `awards.ts` and the page.
 - [ ] **Step 4: Run** `pnpm test`, then verify at 1280×720: stepping to Compound Senior Women shows Brooks 595, Krahe 583 and Moore 576.
 - [ ] **Step 5: Commit**: `"Awards mode for the Sunday ceremony"`. Push only with Michael's OK.
+
+---
+
+### Task 12: Amend the data layer for every year (Amendment A)
+
+Do this BEFORE Task 4. It changes already-built, already-reviewed code from Tasks 1, 2 and 3.
+
+**Files:**
+- Modify: `src/lib/types.ts`, `src/lib/eos-schema.ts`, `src/lib/eos-schema.test.ts`, `src/lib/divisions.ts`, `src/lib/divisions.test.ts`, `src/config/event.ts`, `src/lib/schedule.test.ts`
+- Create: `src/test/fixtures/aggie-2022-double-fita-score-list.json`, `app/components/year-tabs.tsx`
+- Test: the three existing test files above
+
+**Interfaces:**
+- `ArcherRow` loses `half1` and `half2` and gains `rounds: number[]` — every `round_N` key present on the row, in numeric order. `total` stays `total_score`.
+- `src/config/event.ts` gains:
+  ```ts
+  export interface ArchiveTournament { slug: string; id: string; name: string; sectionLabel: string | null }
+  export interface ArchiveYear { year: number; label: string; dates: string; tournaments: ArchiveTournament[] }
+  export const YEARS: ArchiveYear[]
+  export function archiveConfigs(year: number): EventConfig[]   // one per tournament, live:false, lines:[]
+  ```
+  `archiveConfig(year)` is replaced by `archiveConfigs(year)`; update Task 6's and Task 9's callers. `ARCHIVE` is removed.
+- `app/components/year-tabs.tsx` exports `YearTabs({ current }: { current: number | 'live' })`, a server component rendering one link per `YEARS` entry (newest first) plus the live year, marking the current one `aria-current="page"`.
+
+`YEARS` content, exact:
+| year | label | dates | tournaments (slug, id, sectionLabel) |
+|---|---|---|---|
+| 2025 | `2025` | `Nov 7–9, 2025` | `2025`, `QVRrY0JnUWtSTXJRdVBmN0xzWnBHQT09`, `null` |
+| 2024 | `2024` | `Nov 22–24, 2024` | `2024`, `a0FvWDBhcW1kVnF3bFRRY1lMTWE0dz09`, `null` |
+| 2023 | `2023` | `Nov 3–5, 2023` | `2023`, `bVRpazQxQ2NEbGRrQmpqUnR2RzZPUT09`, `null` |
+| 2022 | `2022` | `Nov 11–13, 2022` | `2022-double-fita`, `bWkrMXQ2bEhIaHdaVjBveUZQNVYyZz09`, `Double FITA · 120 arrows`; then `2022-joad`, `dFZISWJuT051SkNmb2lkNVB3cVdFQT09`, `JOAD · 60 arrows` |
+
+Each tournament's `name` is its EOS name: `2025 Aggie Invitational`, `2024 Aggie Invitational`, `2023 Aggie Invitational`, `Aggie Invitational - Double FITA`, `Aggie Invite - JOAD`.
+
+**Division parsing changes** (`divisions.ts`): matching becomes case-insensitive, and the age may appear either after the class word or before it. Drop the class words `Cub`, `Bowman`, `Cadet`, `Junior`, `Trophy` wherever they sit, then take the first remaining word that is a known age. 2022 writes names like `barebow (recurve) bowman u13 female` and `compound trophy cub u15 male`; 2024 writes `Compound U15 Cub Male`. Both must give the same label.
+
+- [ ] **Step 1: Capture the 2022 fixture.** From the worktree root:
+  ```bash
+  TOK=$(sed -n "s/^const TOKEN = '\(.*\)'$/\1/p" src/lib/eos.ts)
+  curl -s -X POST -H "Authorization: $TOK" "https://api.eyesonscore.com/api/tournament_score_list?is_private=false&id=bWkrMXQ2bEhIaHdaVjBveUZQNVYyZz09&for_fav=true" -o src/test/fixtures/aggie-2022-double-fita-score-list.json
+  ```
+  Expected: the file starts `{"status_code":200`.
+- [ ] **Step 2: Write the failing tests.**
+  - `eos-schema.test.ts`: D'Amour's row now asserts `rounds: [292, 295]` in place of `half1`/`half2`, with `total: 587` unchanged. New test: parsing the 2022 Double FITA fixture gives 204 rows and 43 divisions, and Sawyer Sullivan's row has `rounds: [299, 291, 298, 297]`, `total: 1185`, `arrowsDue: 120`, and `rounds.reduce((a, b) => a + b, 0) === 1185`.
+  - `divisions.test.ts`: `'barebow (recurve) bowman u13 female'` gives label `Barebow U13 Women` and slug `barebow-u13-women`; `'compound trophy cub u15 male'` gives `Compound U15 Men`; `'Compound U15 Cub Male'` still gives `Compound U15 Men` (same label from both spellings). Every division in the 2022 fixture parses with `known: true`.
+  - `schedule.test.ts`: `archiveConfigs(2022)` returns 2 configs whose slugs are `['2022-double-fita', '2022-joad']`; `archiveConfigs(2025)` returns 1; `archiveConfigs(2019)` returns `[]`. `YEARS` covers 2022–2025.
+- [ ] **Step 3: Run** `pnpm test`. Expected: FAIL on the new assertions.
+- [ ] **Step 4: Implement** the `rounds` change, the division-parsing change, the `YEARS` / `archiveConfigs` change, and `YearTabs`. Update every existing caller so the suite is green.
+- [ ] **Step 5: Run** `pnpm test && pnpm typecheck`. Expected: all pass, output pristine.
+- [ ] **Step 6: Commit**: `"Support every archive year, including the 2022 Double FITA"`
