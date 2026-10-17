@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { cardKey, createLoadCache } from './scorecard-cache'
+import { SCORECARD_TTL_MS, cardKey, createLoadCache } from './scorecard-cache'
 
 describe('createLoadCache', () => {
   it('serves a repeat ask from the cache without calling the loader again', async () => {
@@ -47,6 +47,54 @@ describe('createLoadCache', () => {
     await cache.load('a', loader)
     expect(cache.peek('a')).toBeNull()
     expect(loader).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('createLoadCache with a TTL', () => {
+  function clocked() {
+    let time = 1_000
+    const cache = createLoadCache<number>(() => time)
+    return { cache, advance: (ms: number) => (time += ms) }
+  }
+
+  it('serves a repeat ask inside the TTL from the cache', async () => {
+    const { cache, advance } = clocked()
+    const loader = vi.fn(() => Promise.resolve(1))
+    await cache.load('a', loader, SCORECARD_TTL_MS)
+    advance(SCORECARD_TTL_MS - 1)
+    expect(cache.peek('a')).toBe(1)
+    await cache.load('a', loader, SCORECARD_TTL_MS)
+    expect(loader).toHaveBeenCalledTimes(1)
+  })
+
+  it('fetches again once the TTL has passed', async () => {
+    const { cache, advance } = clocked()
+    const loader = vi.fn().mockResolvedValueOnce(1).mockResolvedValueOnce(2)
+    await cache.load('a', loader, SCORECARD_TTL_MS)
+    advance(SCORECARD_TTL_MS)
+    expect(cache.peek('a')).toBeUndefined()
+    expect(await cache.load('a', loader, SCORECARD_TTL_MS)).toBe(2)
+    expect(loader).toHaveBeenCalledTimes(2)
+  })
+
+  it('keeps a value loaded without a TTL for good', async () => {
+    const { cache, advance } = clocked()
+    const loader = vi.fn(() => Promise.resolve(1))
+    await cache.load('a', loader)
+    advance(24 * 60 * 60 * 1000)
+    await cache.load('a', loader)
+    expect(loader).toHaveBeenCalledTimes(1)
+  })
+
+  it('still shares one request for a double ask with a TTL', async () => {
+    const { cache } = clocked()
+    const loader = vi.fn(() => Promise.resolve(1))
+    await Promise.all([cache.load('a', loader, SCORECARD_TTL_MS), cache.load('a', loader, SCORECARD_TTL_MS)])
+    expect(loader).toHaveBeenCalledTimes(1)
+  })
+
+  it('is a minute', () => {
+    expect(SCORECARD_TTL_MS).toBe(60_000)
   })
 })
 

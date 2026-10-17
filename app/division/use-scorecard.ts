@@ -4,7 +4,7 @@ import { useCallback, useRef, useState } from 'react'
 import type { CardView } from '../components/scorecard-modal'
 import { EosHttpError, fetchScorecard } from '@/lib/eos'
 import { loadFrozenCard } from '@/lib/frozen'
-import { cardKey, sessionCards } from '@/lib/scorecard-cache'
+import { SCORECARD_TTL_MS, cardKey, sessionCards } from '@/lib/scorecard-cache'
 import type { ArcherRow, EventConfig, Scorecard } from '@/lib/types'
 
 const LOADING: CardView = { kind: 'loading' }
@@ -64,7 +64,7 @@ export function useScorecard(config: EventConfig): ScorecardControl {
         if (showing.current === id) setView(next)
       }
       sessionCards
-        .load(key, () => requestCard(config, id))
+        .load(key, () => requestCard(config, id), config.live ? SCORECARD_TTL_MS : undefined)
         .then((card) => settle({ kind: 'ready', card }), (error: unknown) => settle(failureView(error)))
     },
     [config, scope],
