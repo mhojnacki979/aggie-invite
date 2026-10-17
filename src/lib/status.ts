@@ -96,6 +96,8 @@ function applyShootOff(rows: ArcherRow[], names: string[] | undefined): ArcherRo
   if (named.length !== names.length || !first) return rows
   if (new Set(named.map((row) => row.rank)).size !== 1) return rows
   if (new Set(named).size !== named.length) return rows
+  // A partial list would leave an unnamed archer tied at a rank another now holds.
+  if (named.length !== rows.filter((row) => row.rank === first.rank).length) return rows
   return rows.map((row) => {
     const place = named.indexOf(row)
     return place < 0 ? row : { ...row, rank: first.rank + place }

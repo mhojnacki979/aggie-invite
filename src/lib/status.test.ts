@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { EVENT_2025 } from '../config/event'
 import { parseScoreList } from './eos-schema'
 import { cutAt, parsePreview } from './preview'
+import { sessionKey } from './schedule'
 import { buildEventView, isDone } from './status'
 import type { DivisionView, EventView } from './status'
 import type { ArcherRow, EventConfig } from './types'
@@ -118,8 +119,10 @@ describe('buildEventView on the full 2025 data', () => {
 
   it('maps every shooter to their line', () => {
     const brody = rowNamed('Brody Wonch')
-    expect(view.lineByShooter[brody.shooterId]?.key).toBeTruthy()
-    expect(Object.keys(view.lineByShooter)).toHaveLength(new Set(rows.map((r) => r.shooterId)).size)
+    expect(view.lineByShooter[brody.shooterId]?.key).toBe(sessionKey(brody.session))
+    for (const row of rows) {
+      expect(view.lineByShooter[row.shooterId]?.key).toBe(sessionKey(row.session))
+    }
   })
 })
 
@@ -141,6 +144,19 @@ describe('shoot-offs', () => {
     const d = division(view, 'Compound U18 Male')
     expect(d.tieFor).toBe(1)
     expect(names(d.podium)).toEqual(['Brody Wonch', 'Caleb Quiocho', 'Chase Crotty'])
+  })
+
+  it('leaves the rows alone when the entry names only some of the tied archers', () => {
+    const third = rowNamed('Chase Crotty')
+    const tiedThree = replaceRow(rows, third, { rank: 1 })
+    const view = buildEventView(tiedThree, {
+      ...cfg,
+      shootOffs: { 'Compound U18 Male': ['Caleb Quiocho', 'Brody Wonch'] },
+    })
+    const d = division(view, 'Compound U18 Male')
+    expect(d.tieFor).toBe(1)
+    expect(names(d.podium)).toEqual(['Brody Wonch', 'Caleb Quiocho', 'Chase Crotty'])
+    expect(d.podium.map((r) => r.rank)).toEqual([1, 1, 1])
   })
 
   it('leaves the rows alone when the named archers do not share a rank', () => {
@@ -217,8 +233,11 @@ describe('cutAt', () => {
     const cut = cutAt(rows, cfg.lines, 2, 12)
     const early = firstRow((r) => r.session.includes('11-07-2025') && r.arrowsShot === 60)
     const late = firstRow((r) => r.session.includes(SUNDAY) && r.arrowsShot === 60)
-    // Rank is excluded: a simulation re-ranks, and zeroing later-line rivals can move it up.
-    expect(cut.find((r) => r.shooterId === early.shooterId)).toEqual({ ...early, rank: expect.any(Number) })
+    // Rank is checked apart: a simulation re-ranks, and zeroing later-line rivals can move it up.
+    const kept = cut.find((r) => r.shooterId === early.shooterId)
+    expect({ ...kept, rank: 0 }).toEqual({ ...early, rank: 0 })
+    expect(kept?.rank).toBeGreaterThanOrEqual(1)
+    expect(kept?.rank).toBeLessThanOrEqual(early.rank)
     expect(cut.find((r) => r.shooterId === late.shooterId)).toMatchObject({
       arrowsShot: 0,
       total: 0,
