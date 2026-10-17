@@ -17,7 +17,8 @@ export const EVENT_2025: EventConfig = {
   name: '2025 Aggie Invitational',
   dates: 'Nov 7–9, 2025',
   tournamentId: 'QVRrY0JnUWtSTXJRdVBmN0xzWnBHQT09',
-  live: true,
+  // Finished: served from public/data/2025.json, so the site makes no EOS request.
+  live: false,
   lines: weekendLines('11-07-2025', '11-08-2025', '11-09-2025'),
   closedLines: [],
   shootOffs: {},
@@ -122,5 +123,7 @@ export function archiveConfigs(year: number): EventConfig[] {
   }))
 }
 
-export const NEXT_EVENT_NOTE: string | null =
-  CURRENT_EVENT.year < 2026 ? '2026 live scoring starts Fri, Nov 6 at 6:00 PM' : null
+/** Also what the page says while a live event has no EOS tournament id yet. */
+export const SCORING_SOON_NOTE = '2026 live scoring starts Fri, Nov 6 at 6:00 PM'
+
+export const NEXT_EVENT_NOTE: string | null = CURRENT_EVENT.year < 2026 ? SCORING_SOON_NOTE : null
