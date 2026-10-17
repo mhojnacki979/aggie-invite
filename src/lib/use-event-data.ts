@@ -33,21 +33,26 @@ async function pollOnce(tournamentId: string): Promise<FetchOutcome> {
   }
 }
 
-/** Fetch every `intervalMs`, and now when `fetchNow`; skip while the tab is hidden; refetch when it returns. */
+/** Fetch every `intervalMs`, and now when `fetchNow`; skip while the tab is hidden; refetch when it returns after a full interval. */
 function startPolling(tournamentId: string, apply: Apply, intervalMs: number, fetchNow: boolean): () => void {
   let cancelled = false
   let inFlight = false
+  // A restart without a fetch (idle changed) follows a fetch that just happened.
+  let lastFetch = fetchNow ? 0 : Date.now()
   const tick = (): void => {
     // One request at a time per visitor, so a slow poll can't pile up or land out of order.
     if (inFlight || document.hidden) return
     inFlight = true
+    lastFetch = Date.now()
     void pollOnce(tournamentId).then((outcome) => {
       inFlight = false
       if (!cancelled) apply(outcome)
     })
   }
+  // Coming back to the tab refetches only if a full interval has passed, so flicking between apps
+  // on a finished event does not spend calls from the budget shared across all of EOS.
   const onVisible = (): void => {
-    if (!document.hidden) tick()
+    if (!document.hidden && Date.now() - lastFetch >= intervalMs) tick()
   }
   if (fetchNow) tick()
   const timer = setInterval(tick, intervalMs)

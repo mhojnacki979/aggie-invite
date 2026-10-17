@@ -33,9 +33,13 @@ function statusText(config: EventConfig, state: FetchState, now: number): string
 /** One quiet line saying how fresh the scores are, or that the event is over. */
 export function StatusLine({ config, state }: { config: EventConfig; state: FetchState }) {
   const now = useNow(config.live && state.updatedAt !== null)
+  const text = statusText(config, state, now)
+  // The seconds tick every second, so that text must not sit in a live region (it would be read
+  // out continuously). The region is always present and only gets text for the rare error state.
   return (
-    <p className="status-line" role="status">
-      {statusText(config, state, now)}
+    <p className="status-line">
+      <span role="status">{state.error ? text : null}</span>
+      {!state.error && <span>{text}</span>}
     </p>
   )
 }
