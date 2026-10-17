@@ -540,3 +540,37 @@ Each tournament's `name` is its EOS name: `2025 Aggie Invitational`, `2024 Aggie
 - [ ] **Step 4: Implement** the `rounds` change, the division-parsing change, the `YEARS` / `archiveConfigs` change, and `YearTabs`. Update every existing caller so the suite is green.
 - [ ] **Step 5: Run** `pnpm test && pnpm typecheck`. Expected: all pass, output pristine.
 - [ ] **Step 6: Commit**: `"Support every archive year, including the 2022 Double FITA"`
+
+---
+
+### Task 13: Polish pass
+
+Collected from the Task 7, 8, 9 and 11 reviews plus the controller's own screenshot passes. None of these blocked their own task; they are grouped so one pass covers every visual and every test-strength gap at once. Keep each change small and verify in a browser where the item is visual.
+
+**Files:** `app/home/home-view.tsx`, `app/home/status-line.tsx`, `app/home/line-strip.tsx`, `app/home/podium-card.tsx`, `app/home/archer-search.tsx`, `app/division/division.css`, `app/division/scorecard-modal.tsx`, `app/awards/awards-view.tsx`, `app/awards/awards.css`, `src/lib/status.ts`, `src/lib/scorecard-cache.ts`, `src/lib/use-scorecard.ts`, and the matching test files.
+
+**Correctness and copy**
+- [ ] **P1 — the date prints twice.** The header shows `Nov 7–9, 2025 · PEAP, College Station` and the status line immediately under it shows `Final results · Nov 7–9, 2025`. It reads as a mistake on every finished page, including each 2022 section. For a finished event the status line should read `Final results` alone; keep the dates in the header line.
+- [ ] **P7 — the collision slug winner must not move during a live event.** `separateCollisions` (`src/lib/status.ts`) picks the winner by `shot`, which changes as arrows land, so a typo collision in the 2026 data could hand the clean slug to a different division mid-event and a bookmarked `?d=` link would open the wrong board. Choose a winner that does not depend on live counts (prefer the raw name that matches the canonical spelling, then a deterministic tiebreak). Replace the locale-dependent `localeCompare` with a plain `<` so ordering cannot vary by environment.
+- [ ] **P6 — `No arrows shot yet.` is misleading.** Only rows WITH arrows are tappable, so a `null` card means the frozen JSON has no scorecard for that archer. Say that instead.
+- [ ] **Awards: `Decided by the shoot-off` reads as already decided** while the tie is unresolved. Use `Pending shoot-off`.
+
+**Visual**
+- [ ] **P3 — the `10s` column sits flush against the card edge at 375px.** `division.css`'s `th:last-child, td:last-child { padding-right: 12px }` lands on the `9s` column, which is hidden under 480px. Give the visible `10s` cells that padding inside the media query.
+- [ ] **P2 — line-strip cards are uneven.** Only Sat 1:00 PM carries the `JOAD line` tag, so its status pill sits a row lower than its neighbours. Reserve the tag row, or align the pills to the bottom of the card.
+- [ ] **Awards: a tie card holding 4+ archers overflows.** A three-way tie currently fits with ~13px to spare and `podiumSlots` can legitimately produce four (ranks 1,2,3,3). Add a smaller type step when a card holds 4 or more, so overflow is impossible rather than merely unlikely. Overflowed text is maroon-on-maroon and vanishes.
+
+**Accessibility**
+- [ ] **P5 — the scorecard modal has no focus trap** and the page behind is not inert, so Tab walks out of an `aria-modal` dialog. Trap focus, and announce the loading and error states.
+- [ ] **Awards: the header links behind the overlay are still reachable with Tab**, so a stray Enter mid-ceremony navigates away from the slides. Make the covered chrome `inert` or `tabIndex={-1}` while awards mode is open.
+- [ ] **P9 — two sections, duplicate names.** On `/past/2022/` both embedded sections expose a landmark and a list with identical accessible names (`Shooting lines`, the search region), so landmark navigation cannot tell them apart — suffix them with the section label when embedded. The heading hierarchy is also flat: `PodiumCard` titles are `h3`, the same level as the `h3` that introduces them. And `Podiums` declares a local `const Heading` that shadows the module-level `Heading` component — rename the local to `Tag`.
+
+**Test strength**
+- [ ] **P4 — the live-vs-frozen TTL choice is an untested ternary** in `use-scorecard.ts`; the cache tests only prove the mechanism, so nothing fails if someone swaps it. Extract `scorecardTtl(config)` into the cache module and test both branches.
+- [ ] **P8 — the Amelia White test would pass against pre-fix code.** Make it discriminating (assert the board her slug resolves to is her own), add a tie-break case (equal `shot`, ordered by raw name), and assert `CURRENT_EVENT.finished` is `undefined`.
+
+**Operational**
+- [ ] **Awards: a reload loses the presenter's place** among 48 slides. Keep the index in the URL hash so a reload resumes where it was.
+
+- [ ] **Verify:** `pnpm test`, `pnpm typecheck`, `pnpm build` all clean. In a browser, re-check the home page and `/past/2022/` at 375px (including `document.documentElement.scrollWidth` after a division table renders), the division board's `10s` padding at 375px, the awards tie slides at 1280×720, and the scorecard modal's focus behaviour. Re-take any screenshot an item changed.
+- [ ] **Commit**: `"Polish pass: copy, layout, accessibility and test strength"`
