@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { SCORING_SOON_NOTE } from '@/config/event'
 import { parsePreview, cutAt } from '@/lib/preview'
 import { deriveLines } from '@/lib/schedule'
-import { buildEventView } from '@/lib/status'
+import { allLinesFinal, buildEventView } from '@/lib/status'
 import type { DivisionView, EventView } from '@/lib/status'
 import type { FetchState } from '@/lib/fetch-state'
 import type { ArcherRow, EventConfig } from '@/lib/types'
@@ -37,10 +37,13 @@ function Podiums({ divisions, config, embedded }: { divisions: DivisionView[]; c
   const shown = divisions.filter((division) => division.shot > 0)
   if (shown.length === 0) return <p className="muted">Podiums appear here once scoring starts.</p>
   const allFinal = shown.every((division) => division.status === 'final')
+  const title = allFinal ? 'Final podiums' : 'Podiums so far'
+  // Two boards on one page (2022) would otherwise carry the same region name.
+  const sectionName = embedded && config.sectionLabel ? { 'aria-label': `${title}: ${config.sectionLabel}` } : { 'aria-labelledby': headingId }
   return (
-    <section aria-labelledby={headingId}>
+    <section {...sectionName}>
       <Tag id={headingId} className="section-title">
-        {allFinal ? 'Final podiums' : 'Podiums so far'}
+        {title}
       </Tag>
       <div className="pod-grid">
         {shown.map((division) => (
@@ -86,11 +89,6 @@ function Board({ config, state, view, embedded }: { config: EventConfig; state: 
       <Podiums divisions={view.divisions} config={config} embedded={embedded} />
     </>
   )
-}
-
-/** Whether every line has closed, so the page can stop asking EOS for updates so often. */
-function allLinesFinal(view: EventView): boolean {
-  return view.lines.length > 0 && view.lines.every((line) => line.status === 'final')
 }
 
 /** Its own title: the event name as the page heading, or (inside a multi-tournament page) the section's label as a subheading. */

@@ -51,7 +51,13 @@ export interface EventConfig {
   tournamentId: string
   live: boolean
   lines: LineConfig[]
+  /** Lines to force to Final even though an archer never finished (the way out when a line will not close). */
   closedLines: string[]
+  /**
+   * Lines to force to never read Final, for when a line's scores are on paper and not yet entered.
+   * The opposite of `closedLines`, and it wins over it. Unset means none.
+   */
+  openLines?: string[]
   /**
    * The tournament is over and its results are saved: every line with an arrow is final even when an
    * archer withdrew partway (2022). Unset on the current event so its `?preview=` states still show.

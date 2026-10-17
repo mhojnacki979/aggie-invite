@@ -21,6 +21,7 @@ export const EVENT_2025: EventConfig = {
   live: false,
   lines: weekendLines('11-07-2025', '11-08-2025', '11-09-2025'),
   closedLines: [],
+  openLines: [],
   shootOffs: {},
 }
 
@@ -35,6 +36,7 @@ export const EVENT_2026: EventConfig = {
   live: true,
   lines: weekendLines('11-06-2026', '11-07-2026', '11-08-2026'),
   closedLines: [],
+  openLines: [],
   shootOffs: {},
 }
 

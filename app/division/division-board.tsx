@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { SCORING_SOON_NOTE } from '@/config/event'
 import { eventHomeHref, resolveEventConfig } from '@/lib/division-route'
 import type { FetchState } from '@/lib/fetch-state'
-import { buildEventView } from '@/lib/status'
+import { allLinesFinal, buildEventView } from '@/lib/status'
 import type { DivisionView, EventView } from '@/lib/status'
 import type { ArcherRow, EventConfig } from '@/lib/types'
 import { isUnconfigured, useEventData } from '@/lib/use-event-data'
@@ -91,11 +91,6 @@ function Loaded({ config, division, view, state }: { config: EventConfig; divisi
       )}
     </div>
   )
-}
-
-/** Whether every line has closed, so the page can stop asking EOS for updates so often. */
-function allLinesFinal(view: EventView): boolean {
-  return view.lines.length > 0 && view.lines.every((line) => line.status === 'final')
 }
 
 function Board({ config, slug }: { config: EventConfig; slug: string }) {

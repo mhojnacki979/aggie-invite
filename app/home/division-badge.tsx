@@ -1,18 +1,24 @@
+import { badgesFor } from '@/lib/settled'
+import type { BadgeKind } from '@/lib/settled'
 import type { DivisionView } from '@/lib/status'
 import { ordinal } from './format'
 
-/**
- * Says whether a division's result is settled. A tie wins the badge, since it needs a shoot-off,
- * but a tie in a division still shooting also keeps the Provisional badge: a podium that can
- * still change must never read as settled.
- */
+const CLASSES: Record<BadgeKind, string> = { tie: 'badge-tie', final: 'badge-final', provisional: 'badge-prov' }
+
+function labelFor(kind: BadgeKind, division: DivisionView): string {
+  if (kind === 'tie') return `Tie for ${ordinal(division.tieFor ?? 0)}`
+  return kind === 'final' ? 'Final' : 'Provisional'
+}
+
+/** Says whether a division's result is settled; the rule itself lives in `badgesFor`. */
 export function DivisionBadge({ division }: { division: DivisionView }) {
-  const { tieFor, status } = division
   return (
     <span className="badges">
-      {tieFor !== null && <span className="badge badge-tie">Tie for {ordinal(tieFor)}</span>}
-      {tieFor === null && status === 'final' && <span className="badge badge-final">Final</span>}
-      {status === 'provisional' && <span className="badge badge-prov">Provisional</span>}
+      {badgesFor(division).map((kind) => (
+        <span key={kind} className={`badge ${CLASSES[kind]}`}>
+          {labelFor(kind, division)}
+        </span>
+      ))}
     </span>
   )
 }

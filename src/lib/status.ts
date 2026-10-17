@@ -59,11 +59,13 @@ function groupByLine(rows: ArcherRow[], lines: LineConfig[]): Map<string, Archer
 
 /**
  * Final once a later line has an arrow, the line is manually closed, or everyone with an arrow is
- * done. Upcoming when nobody has shot. Otherwise shooting. Archers with no arrows are no-shows.
+ * done. Upcoming when nobody has shot. Otherwise shooting. Archers with no arrows are no-shows,
+ * which is the one thing the data cannot tell from scores still on paper: `open` is the owner's
+ * way to say so, and it is checked first so a line listed there can never read Final.
  */
-function lineStatus(archers: ArcherRow[], laterStarted: boolean, closed: boolean): LineStatus {
+function lineStatus(archers: ArcherRow[], laterStarted: boolean, closed: boolean, open: boolean): LineStatus {
   const started = archers.filter(hasArrow)
-  if (laterStarted || closed || (started.length > 0 && started.every(isDone))) return 'final'
+  if (!open && (laterStarted || closed || (started.length > 0 && started.every(isDone)))) return 'final'
   return started.length === 0 ? 'upcoming' : 'shooting'
 }
 
@@ -80,7 +82,7 @@ function buildLineViews(rows: ArcherRow[], lines: LineConfig[], config: EventCon
     const view: LineView = {
       key: line.key,
       label: line.label,
-      status: lineStatus(archers, laterStarted, closed),
+      status: lineStatus(archers, laterStarted, closed, (config.openLines ?? []).includes(line.key)),
       archers: archers.length,
       endsShot: Math.floor(mostArrows / ARROWS_PER_END),
     }
@@ -88,17 +90,40 @@ function buildLineViews(rows: ArcherRow[], lines: LineConfig[], config: EventCon
   })
 }
 
-/** Gives the named tied archers ranks r, r+1, ... in the listed order; any miss leaves rows alone. */
-function applyShootOff(rows: ArcherRow[], names: string[] | undefined): ArcherRow[] {
+/** Why a shoot-off entry did nothing. The page changes in no other way, so this is the only trace of it. */
+function declineShootOff(division: string, reason: string): void {
+  console.warn(`Shoot-off for "${division}" ignored: ${reason}`)
+}
+
+/**
+ * Gives the named tied archers ranks r, r+1, ... in the listed order. Any miss leaves rows alone and
+ * says why on the console, because the board reads exactly as it did before.
+ */
+function applyShootOff(rows: ArcherRow[], names: string[] | undefined, division: string): ArcherRow[] {
   if (!names || names.length === 0) return rows
   const found = names.map((name) => rows.find((row) => row.name === name))
+  const missing = names.filter((_, index) => found[index] === undefined)
+  if (missing.length > 0) {
+    declineShootOff(division, `no archer named ${missing.map((name) => `"${name}"`).join(', ')} (names must match EOS exactly)`)
+    return rows
+  }
   const named = found.filter((row): row is ArcherRow => row !== undefined)
   const first = named[0]
-  if (named.length !== names.length || !first) return rows
-  if (new Set(named.map((row) => row.rank)).size !== 1) return rows
-  if (new Set(named).size !== named.length) return rows
+  if (!first) return rows
+  if (new Set(named.map((row) => row.rank)).size !== 1) {
+    declineShootOff(division, 'the listed archers do not all share one rank')
+    return rows
+  }
+  if (new Set(named).size !== named.length) {
+    declineShootOff(division, 'an archer is listed more than once')
+    return rows
+  }
   // A partial list would leave an unnamed archer tied at a rank another now holds.
-  if (named.length !== rows.filter((row) => row.rank === first.rank).length) return rows
+  const tied = rows.filter((row) => row.rank === first.rank).length
+  if (named.length !== tied) {
+    declineShootOff(division, `${tied} archers share rank ${first.rank} but ${named.length} are listed (list every one)`)
+    return rows
+  }
   return rows.map((row) => {
     const place = named.indexOf(row)
     return place < 0 ? row : { ...row, rank: first.rank + place }
@@ -122,7 +147,7 @@ function buildDivision(
   shootOffs: Record<string, string[]>,
 ): DivisionView {
   // Array.prototype.sort is stable, so equal EOS ranks keep the order EOS returned.
-  const ordered = applyShootOff(group, shootOffs[name]).sort((a, b) => a.rank - b.rank)
+  const ordered = applyShootOff(group, shootOffs[name], name).sort((a, b) => a.rank - b.rank)
   const remaining = ordered.filter((row) => !isDone(row) && lineOf(row)?.status !== 'final').length
   return {
     name,
@@ -175,8 +200,23 @@ function groupByDivision(rows: ArcherRow[]): Map<string, ArcherRow[]> {
   return groups
 }
 
+/** Whether every line has closed, so a page can stop asking EOS for updates so often. */
+export function allLinesFinal(view: EventView): boolean {
+  return view.lines.length > 0 && view.lines.every((line) => line.status === 'final')
+}
+
+/** A shoot-off keyed to a division name EOS does not have is the same silent no-op, one step earlier. */
+function warnUnknownShootOffs(rows: ArcherRow[], shootOffs: Record<string, string[]>): void {
+  if (rows.length === 0) return
+  const known = new Set(rows.map((row) => row.division))
+  for (const name of Object.keys(shootOffs)) {
+    if (!known.has(name)) declineShootOff(name, 'no division has that name (it must match EOS exactly)')
+  }
+}
+
 /** Everything the pages show: line states, every division with its podium and ties. */
 export function buildEventView(rows: ArcherRow[], config: EventConfig): EventView {
+  warnUnknownShootOffs(rows, config.shootOffs)
   const lines = resolveLines(rows, config)
   const lineViews = buildLineViews(rows, lines, config)
   const viewByKey = new Map(lineViews.map((view) => [view.key, view]))

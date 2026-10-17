@@ -88,7 +88,8 @@
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 12px;
-  overflow: hidden;
+  /* Scrolls rather than clips if a board is ever wider than the screen. */
+  overflow-x: auto;
 }
 
 .dv-table {

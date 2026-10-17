@@ -5,7 +5,7 @@ import type { CSSProperties } from 'react'
 import { CURRENT_EVENT, SCORING_SOON_NOTE } from '@/config/event'
 import { awardsOrder, podiumSlots, slideFromHash, slideHash, slideMode, stepIndex } from '@/lib/awards'
 import type { PlaceSlot } from '@/lib/awards'
-import { buildEventView } from '@/lib/status'
+import { allLinesFinal, buildEventView } from '@/lib/status'
 import type { DivisionView } from '@/lib/status'
 import { isUnconfigured, useEventData } from '@/lib/use-event-data'
 import { makeInert } from '../components/inert'
@@ -143,11 +143,12 @@ function useInertChrome(): void {
  */
 export function AwardsView() {
   useInertChrome()
-  const state = useEventData(CURRENT_EVENT)
-  const divisions = useMemo(
-    () => awardsOrder(buildEventView(state.rows ?? [], CURRENT_EVENT)),
-    [state.rows],
-  )
+  const [idle, setIdle] = useState(false)
+  const state = useEventData(CURRENT_EVENT, idle)
+  const view = useMemo(() => buildEventView(state.rows ?? [], CURRENT_EVENT), [state.rows])
+  const divisions = useMemo(() => awardsOrder(view), [view])
+  const finished = allLinesFinal(view)
+  useEffect(() => setIdle(finished), [finished])
   if (isUnconfigured(CURRENT_EVENT)) return <Message text={SCORING_SOON_NOTE} />
   if (state.rows === null) return <Message text={state.error ? 'Waiting for the scoreboard…' : 'Loading scores…'} />
   return <Ceremony divisions={divisions} />

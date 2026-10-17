@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { EVENT_2025 } from '../config/event'
 import { parseScoreList } from './eos-schema'
 import { cutAt, parsePreview } from './preview'
@@ -165,6 +165,48 @@ describe('shoot-offs', () => {
     expect(d.tieFor).toBe(1)
     expect(d.podium.map((r) => r.rank)).toEqual([1, 1, 3])
   })
+
+  describe('a declined entry says why on the console', () => {
+    afterEach(() => vi.restoreAllMocks())
+
+    function warningsFor(shootOffs: EventConfig['shootOffs'], source: ArcherRow[] = rows): string[] {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+      buildEventView(source, { ...cfg, shootOffs })
+      return warn.mock.calls.map((call) => String(call[0]))
+    }
+
+    it('names a misspelled archer and the division', () => {
+      const [message] = warningsFor({ 'Compound U18 Male': ['Caleb Quicho', 'Brody Wonch'] })
+      expect(message).toContain('Compound U18 Male')
+      expect(message).toContain('"Caleb Quicho"')
+    })
+
+    it('says a partial list needs every tied archer', () => {
+      const tiedThree = replaceRow(rows, rowNamed('Chase Crotty'), { rank: 1 })
+      const [message] = warningsFor({ 'Compound U18 Male': ['Caleb Quiocho', 'Brody Wonch'] }, tiedThree)
+      expect(message).toContain('3 archers share rank 1 but 2 are listed')
+    })
+
+    it('says when the listed archers do not share a rank', () => {
+      const [message] = warningsFor({ 'Compound U18 Male': ['Caleb Quiocho', 'Chase Crotty'] })
+      expect(message).toContain('do not all share one rank')
+    })
+
+    it('says when an archer is listed twice', () => {
+      const [message] = warningsFor({ 'Compound U18 Male': ['Caleb Quiocho', 'Caleb Quiocho'] })
+      expect(message).toContain('more than once')
+    })
+
+    it('says when no division has that name', () => {
+      const [message] = warningsFor({ 'Compund U18 Male': ['Caleb Quiocho', 'Brody Wonch'] })
+      expect(message).toContain('Compund U18 Male')
+      expect(message).toContain('no division has that name')
+    })
+
+    it('stays quiet for a complete, correct entry', () => {
+      expect(warningsFor({ 'Compound U18 Male': ['Caleb Quiocho', 'Brody Wonch'] })).toEqual([])
+    })
+  })
 })
 
 describe('mid-event states', () => {
@@ -207,6 +249,66 @@ describe('mid-event states', () => {
   it('10c. a finished event still reads upcoming for a line nobody shot', () => {
     const view = buildEventView([], { ...cfg, finished: true })
     expect(statuses(view)).toEqual(['upcoming', 'upcoming', 'upcoming', 'upcoming', 'upcoming'])
+  })
+
+  describe('openLines', () => {
+    const FRIDAY = cfg.lines[0]?.key ?? ''
+
+    // Friday is done (the 2025 data has one Friday archer who stopped partway; finish them) and
+    // nobody has shot Saturday yet, so the no-show rule alone is what closes it.
+    const fridayOnly = cutAt(rows, cfg.lines, 1, 0).map((r) =>
+      r.arrowsShot > 0 ? { ...r, arrowsShot: r.arrowsDue } : r,
+    )
+
+    /** The Friday scores with one archer's left off, as if their card were still on paper. */
+    function withUnenteredArcher(): { list: ArcherRow[]; division: string } {
+      // From a division shot entirely on Friday, so no later line holds it open on its own.
+      const allFriday = (name: string): boolean =>
+        fridayOnly.filter((r) => r.division === name).every((r) => r.session.includes('11-07-2025'))
+      const target = fridayOnly.find((r) => r.arrowsShot > 0 && allFriday(r.division))
+      if (!target) throw new Error('no all-Friday division')
+      const blank = { arrowsShot: 0, total: 0, tens: 0, nines: 0, rounds: target.rounds.map(() => 0) }
+      return { list: replaceRow(fridayOnly, target, blank), division: target.division }
+    }
+
+    it('without it, the no-show rule closes the Friday line and reads an unentered archer as a no-show', () => {
+      const { list, division: name } = withUnenteredArcher()
+      const view = buildEventView(list, cfg)
+      expect(statuses(view)[0]).toBe('final')
+      expect(division(view, name).remaining).toBe(0)
+    })
+
+    it('a line listed there stays shooting, and a division with an unentered archer stays provisional', () => {
+      const { list, division: name } = withUnenteredArcher()
+      const view = buildEventView(list, { ...cfg, openLines: [FRIDAY] })
+      expect(statuses(view)[0]).toBe('shooting')
+      expect(division(view, name).status).toBe('provisional')
+      expect(division(view, name).remaining).toBeGreaterThan(0)
+    })
+
+    it('keeps a line open even once a later line has started', () => {
+      const view = buildEventView(rows, { ...cfg, openLines: [FRIDAY] })
+      expect(statuses(view)).toEqual(['shooting', 'final', 'final', 'final', 'final'])
+    })
+
+    it('wins over closedLines', () => {
+      const view = buildEventView(fridayOnly, { ...cfg, closedLines: [FRIDAY], openLines: [FRIDAY] })
+      expect(statuses(view)[0]).toBe('shooting')
+    })
+
+    it('shows an archer whose scores are on paper as still to shoot, not as a closed no-show', () => {
+      const logan = rowNamed('Logan Hamilton')
+      const onPaper = replaceRow(rows, logan, { arrowsShot: 0, total: 0, tens: 0, nines: 0, rounds: logan.rounds.map(() => 0) })
+      const closed = division(buildEventView(onPaper, cfg), logan.division)
+      expect(closed.status).toBe('final')
+      const open = division(buildEventView(onPaper, { ...cfg, openLines: [sessionKey(logan.session)] }), logan.division)
+      expect(open.status).toBe('provisional')
+      expect(open.remaining).toBeGreaterThan(0)
+    })
+
+    it('changes nothing when unset or empty', () => {
+      expect(buildEventView(rows, cfg)).toEqual(buildEventView(rows, { ...cfg, openLines: [] }))
+    })
   })
 
   it('11. no data at all reads upcoming', () => {
