@@ -6,7 +6,7 @@ import { SCORING_SOON_NOTE } from '@/config/event'
 import { parsePreview, cutAt } from '@/lib/preview'
 import { deriveLines } from '@/lib/schedule'
 import { allLinesFinal, buildEventView } from '@/lib/status'
-import type { DivisionView, EventView } from '@/lib/status'
+import type { DivisionView, EventView, LineView } from '@/lib/status'
 import type { FetchState } from '@/lib/fetch-state'
 import type { ArcherRow, EventConfig } from '@/lib/types'
 import { isUnconfigured, useEventData } from '@/lib/use-event-data'
@@ -30,7 +30,17 @@ function usePreviewRows(rows: ArcherRow[] | null, config: EventConfig, preview: 
   }, [rows, config.lines, lineIndex, end])
 }
 
-function Podiums({ divisions, config, embedded }: { divisions: DivisionView[]; config: EventConfig; embedded: boolean }) {
+function Podiums({
+  divisions,
+  lineByShooter,
+  config,
+  embedded,
+}: {
+  divisions: DivisionView[]
+  lineByShooter: Record<string, LineView>
+  config: EventConfig
+  embedded: boolean
+}) {
   const Tag = embedded ? 'h3' : 'h2'
   // Several boards can share a page (2022), so the heading id carries the tournament.
   const headingId = `podiums-heading-${config.slug}`
@@ -53,6 +63,7 @@ function Podiums({ divisions, config, embedded }: { divisions: DivisionView[]; c
           <PodiumCard
             key={division.name}
             division={division}
+            lineByShooter={lineByShooter}
             href={divisionHref(config, division.display.slug)}
             titleTag={embedded ? 'h4' : 'h3'}
           />
@@ -89,7 +100,7 @@ function Board({ config, state, view, embedded }: { config: EventConfig; state: 
     <>
       {view.lines.length > 0 && <LineStrip lines={view.lines} scope={scope} />}
       <ArcherSearch view={view} config={config} scope={scope} />
-      <Podiums divisions={view.divisions} config={config} embedded={embedded} />
+      <Podiums divisions={view.divisions} lineByShooter={view.lineByShooter} config={config} embedded={embedded} />
     </>
   )
 }

@@ -1,17 +1,24 @@
 import Link from 'next/link'
+import { archerMeta } from '@/lib/board-columns'
 import { footerLines } from '@/lib/settled'
-import type { DivisionView } from '@/lib/status'
+import type { DivisionView, LineView } from '@/lib/status'
 import { DivisionBadge } from './division-badge'
 
-/** Before anyone in the division has shot: its archers A–Z at 0. No medals or badge, since nothing is decided. */
-function StartList({ division }: { division: DivisionView }) {
+/**
+ * Before anyone in the division has shot: its archers A–Z at 0, each with their line and bale.
+ * No medals or badge, since nothing is decided.
+ */
+function StartList({ division, lineByShooter }: { division: DivisionView; lineByShooter: Record<string, LineView> }) {
   const rows = [...division.rows].sort((a, b) => a.name.localeCompare(b.name))
   return (
     <ul className="pod-rows">
       {rows.map((row) => (
         <li key={row.shooterId} className="pod-row">
           <span className="medal" aria-hidden="true" />
-          <span className="pod-name">{row.name}</span>
+          <span className="pod-name">
+            {row.name}
+            <span className="pod-meta">{archerMeta(row, lineByShooter[row.shooterId])}</span>
+          </span>
           <span className="num">0</span>
         </li>
       ))}
@@ -20,7 +27,17 @@ function StartList({ division }: { division: DivisionView }) {
 }
 
 /** The top three so far in one division, tied archers sharing a medal. Tapping the card opens the full board. */
-export function PodiumCard({ division, href, titleTag: Title }: { division: DivisionView; href: string; titleTag: 'h3' | 'h4' }) {
+export function PodiumCard({
+  division,
+  lineByShooter,
+  href,
+  titleTag: Title,
+}: {
+  division: DivisionView
+  lineByShooter: Record<string, LineView>
+  href: string
+  titleTag: 'h3' | 'h4'
+}) {
   return (
     <article className="pod">
       <Title className="pod-title">
@@ -29,7 +46,7 @@ export function PodiumCard({ division, href, titleTag: Title }: { division: Divi
         </Link>
       </Title>
       {division.shot === 0 ? (
-        <StartList division={division} />
+        <StartList division={division} lineByShooter={lineByShooter} />
       ) : (
         <>
           <DivisionBadge division={division} />
