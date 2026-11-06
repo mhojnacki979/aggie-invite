@@ -31,8 +31,7 @@ export const EVENT_2026: EventConfig = {
   sectionLabel: null,
   name: '2026 Aggie Invitational',
   dates: 'Nov 6–8, 2026',
-  // Michael fills this in once EOS has the 2026 tournament.
-  tournamentId: '',
+  tournamentId: 'VGg3Z1N0Mjc1SkZNYURQUVZWV2pXZz09',
   live: true,
   lines: weekendLines('11-06-2026', '11-07-2026', '11-08-2026'),
   closedLines: [],
@@ -40,8 +39,7 @@ export const EVENT_2026: EventConfig = {
   shootOffs: {},
 }
 
-// Switch this to EVENT_2026 once EVENT_2026.tournamentId is set.
-export const CURRENT_EVENT: EventConfig = EVENT_2025
+export const CURRENT_EVENT: EventConfig = EVENT_2026
 
 export interface ArchiveTournament {
   slug: string
