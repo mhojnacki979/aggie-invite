@@ -34,10 +34,13 @@ function Podiums({ divisions, config, embedded }: { divisions: DivisionView[]; c
   const Tag = embedded ? 'h3' : 'h2'
   // Several boards can share a page (2022), so the heading id carries the tournament.
   const headingId = `podiums-heading-${config.slug}`
-  const shown = divisions.filter((division) => division.shot > 0)
+  const scored = divisions.filter((division) => division.shot > 0)
+  // A live event lists every division, unscored ones as their archers at 0 (Michael, 2026-11-06).
+  // Finished years keep scored divisions only, so a no-show division never reads as zeros.
+  const shown = config.live ? divisions : scored
   if (shown.length === 0) return <p className="muted">Podiums appear here once scoring starts.</p>
   const allFinal = shown.every((division) => division.status === 'final')
-  const title = allFinal ? 'Final podiums' : 'Podiums so far'
+  const title = scored.length === 0 ? 'Divisions' : allFinal ? 'Final podiums' : 'Podiums so far'
   // Two boards on one page (2022) would otherwise carry the same region name.
   const sectionName = embedded && config.sectionLabel ? { 'aria-label': `${title}: ${config.sectionLabel}` } : { 'aria-labelledby': headingId }
   return (

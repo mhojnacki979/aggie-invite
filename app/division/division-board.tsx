@@ -78,6 +78,7 @@ function Loaded({ config, division, view, state }: { config: EventConfig; divisi
         lineByShooter={view.lineByShooter}
         highlightId={highlightId}
         pending={card.pending}
+        unstartedAsZero={config.live}
         onOpen={card.show}
       />
       {open && (

@@ -13,6 +13,7 @@ interface RowProps {
   roundCount: number
   highlighted: boolean
   pending: boolean
+  unstartedAsZero: boolean
   onOpen: (row: ArcherRow) => void
 }
 
@@ -43,9 +44,10 @@ function ArcherCell({ row, line, started, pending }: { row: ArcherRow; line: Lin
   )
 }
 
-function BoardRow({ row, line, roundCount, highlighted, pending, onOpen }: RowProps) {
+function BoardRow({ row, line, roundCount, highlighted, pending, unstartedAsZero, onOpen }: RowProps) {
   const started = row.arrowsShot > 0
-  const score = (value: number | undefined): string | number => (started ? (value ?? NO_SCORE) : NO_SCORE)
+  const blank = unstartedAsZero ? 0 : NO_SCORE
+  const score = (value: number | undefined): string | number => (started ? (value ?? NO_SCORE) : blank)
   const tap = started ? () => (pending ? undefined : onOpen(row)) : undefined
   const ref = useRef<HTMLTableRowElement>(null)
   // Arriving from a search hit: bring that archer's row into view once, not on every poll.
@@ -54,7 +56,7 @@ function BoardRow({ row, line, roundCount, highlighted, pending, onOpen }: RowPr
   }, [highlighted])
   return (
     <tr ref={ref} className={rowClass(started, highlighted, pending)} onClick={tap} aria-current={highlighted ? 'true' : undefined}>
-      <td className="num dv-rank">{score(row.rank)}</td>
+      <td className="num dv-rank">{started ? score(row.rank) : NO_SCORE}</td>
       <ArcherCell row={row} line={line} started={started} pending={pending} />
       {Array.from({ length: roundCount }, (_, index) => (
         <td key={index} className="num dv-round">
@@ -73,11 +75,13 @@ interface TableProps {
   lineByShooter: Record<string, LineView>
   highlightId: string | null
   pending: ReadonlySet<string>
+  /** A live event shows an archer who hasn't shot at 0; a finished year keeps the dash for no-shows. */
+  unstartedAsZero: boolean
   onOpen: (row: ArcherRow) => void
 }
 
 /** The full board for one division. Round columns and 9s drop out under 480px (see division.css). */
-export function DivisionTable({ division, lineByShooter, highlightId, pending, onOpen }: TableProps) {
+export function DivisionTable({ division, lineByShooter, highlightId, pending, unstartedAsZero, onOpen }: TableProps) {
   const roundCount = roundCountOf(division.rows)
   return (
     <div className="dv-scroll">
@@ -108,6 +112,7 @@ export function DivisionTable({ division, lineByShooter, highlightId, pending, o
               line={lineByShooter[row.shooterId]}
               roundCount={roundCount}
               highlighted={row.shooterId === highlightId}
+              unstartedAsZero={unstartedAsZero}
               pending={pending.has(row.shooterId)}
               onOpen={onOpen}
             />
