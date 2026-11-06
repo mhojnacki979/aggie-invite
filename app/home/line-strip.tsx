@@ -10,10 +10,17 @@ const PILL_TEXT: Record<LineStatus, string> = {
   final: 'Final',
 }
 
-function LineCard({ line, reserveTag }: { line: LineView; reserveTag: boolean }) {
+interface LineCardProps {
+  line: LineView
+  reserveTag: boolean
+  selected: boolean
+  onSelect?: (key: string) => void
+}
+
+function LineCard({ line, reserveTag, selected, onSelect }: LineCardProps) {
   const end = Math.min(line.endsShot, ENDS_PER_LINE)
-  return (
-    <li className={`line line-${line.status}`}>
+  const body = (
+    <>
       <b className="line-label">{line.label}</b>
       {/* When any card in the strip has a tag, the rest keep an empty row so every status pill sits level. */}
       {line.tag ? <span className="line-tag">{line.tag}</span> : reserveTag && <span className="line-tag" aria-hidden="true">&nbsp;</span>}
@@ -29,18 +36,43 @@ function LineCard({ line, reserveTag }: { line: LineView; reserveTag: boolean })
           </span>
         </>
       )}
+    </>
+  )
+  // A live event's lines are buttons: picking one shows only that line's archers below.
+  return (
+    <li className={`line line-${line.status}${selected ? ' line-selected' : ''}`}>
+      {onSelect ? (
+        <button type="button" className="line-btn" aria-pressed={selected} onClick={() => onSelect(line.key)}>
+          {body}
+        </button>
+      ) : (
+        body
+      )}
     </li>
   )
 }
 
 /** The shooting lines in order, each with its state: upcoming, shooting now, or final. */
-export function LineStrip({ lines, scope = null }: { lines: LineView[]; scope?: string | null }) {
+export function LineStrip({
+  lines,
+  scope = null,
+  selected = null,
+  onSelect,
+}: {
+  lines: LineView[]
+  scope?: string | null
+  selected?: string | null
+  onSelect?: (key: string) => void
+}) {
   const reserveTag = lines.some((line) => line.tag)
   return (
-    <ul className="lines" aria-label={scope ? `Shooting lines: ${scope}` : 'Shooting lines'}>
-      {lines.map((line) => (
-        <LineCard key={line.key} line={line} reserveTag={reserveTag} />
-      ))}
-    </ul>
+    <>
+      <ul className={onSelect ? 'lines lines-pickable' : 'lines'} aria-label={scope ? `Shooting lines: ${scope}` : 'Shooting lines'}>
+        {lines.map((line) => (
+          <LineCard key={line.key} line={line} reserveTag={reserveTag} selected={line.key === selected} onSelect={onSelect} />
+        ))}
+      </ul>
+      {onSelect && <p className="line-hint">Tap a time to see only the archers shooting it.</p>}
+    </>
   )
 }

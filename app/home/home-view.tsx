@@ -30,27 +30,40 @@ function usePreviewRows(rows: ArcherRow[] | null, config: EventConfig, preview: 
   }, [rows, config.lines, lineIndex, end])
 }
 
-function Podiums({
-  divisions,
-  lineByShooter,
-  config,
-  embedded,
-}: {
+type LineByShooter = Record<string, LineView>
+
+function hasArcherOn(division: DivisionView, lineByShooter: LineByShooter, lineKey: string): boolean {
+  return division.rows.some((row) => lineByShooter[row.shooterId]?.key === lineKey)
+}
+
+function boardTitle(line: LineView | null, scoredCount: number, allFinal: boolean): string {
+  if (line) return `${line.label} line`
+  if (scoredCount === 0) return 'Divisions'
+  return allFinal ? 'Final podiums' : 'Podiums so far'
+}
+
+interface PodiumsProps {
   divisions: DivisionView[]
-  lineByShooter: Record<string, LineView>
+  lineByShooter: LineByShooter
   config: EventConfig
   embedded: boolean
-}) {
+  /** The line picked in the strip; only its archers and their divisions show. */
+  line: LineView | null
+  onClearLine: () => void
+}
+
+function Podiums({ divisions, lineByShooter, config, embedded, line, onClearLine }: PodiumsProps) {
   const Tag = embedded ? 'h3' : 'h2'
   // Several boards can share a page (2022), so the heading id carries the tournament.
   const headingId = `podiums-heading-${config.slug}`
   const scored = divisions.filter((division) => division.shot > 0)
   // A live event lists every division, unscored ones as their archers at 0 (Michael, 2026-11-06).
   // Finished years keep scored divisions only, so a no-show division never reads as zeros.
-  const shown = config.live ? divisions : scored
+  const all = config.live ? divisions : scored
+  const shown = line ? all.filter((division) => hasArcherOn(division, lineByShooter, line.key)) : all
   if (shown.length === 0) return <p className="muted">Podiums appear here once scoring starts.</p>
   const allFinal = shown.every((division) => division.status === 'final')
-  const title = scored.length === 0 ? 'Divisions' : allFinal ? 'Final podiums' : 'Podiums so far'
+  const title = boardTitle(line, scored.length, allFinal)
   // Two boards on one page (2022) would otherwise carry the same region name.
   const sectionName = embedded && config.sectionLabel ? { 'aria-label': `${title}: ${config.sectionLabel}` } : { 'aria-labelledby': headingId }
   return (
@@ -58,12 +71,18 @@ function Podiums({
       <Tag id={headingId} className="section-title">
         {title}
       </Tag>
+      {line && (
+        <button type="button" className="line-clear" onClick={onClearLine}>
+          Show all lines
+        </button>
+      )}
       <div className="pod-grid">
         {shown.map((division) => (
           <PodiumCard
             key={division.name}
             division={division}
             lineByShooter={lineByShooter}
+            lineKey={line?.key ?? null}
             href={divisionHref(config, division.display.slug)}
             titleTag={embedded ? 'h4' : 'h3'}
           />
@@ -92,15 +111,33 @@ function loadingText(config: EventConfig, state: FetchState): string {
  * Lines, search and podiums. Until the first rows arrive (or an unconfigured event has none to
  * wait for) there is nothing true to show: five Upcoming lines would be false for a finished event.
  */
-function Board({ config, state, view, embedded }: { config: EventConfig; state: FetchState; view: EventView; embedded: boolean }) {
+interface BoardProps {
+  config: EventConfig
+  state: FetchState
+  view: EventView
+  embedded: boolean
+  line: LineView | null
+  /** Set only for a live event: its lines can be picked. */
+  onPickLine?: (key: string) => void
+  onClearLine: () => void
+}
+
+function Board({ config, state, view, embedded, line, onPickLine, onClearLine }: BoardProps) {
   if (!isUnconfigured(config) && state.rows === null) return <p className="muted">{loadingText(config, state)}</p>
   // Several boards on one page (2022) would repeat the same landmark names, so each says which section it is.
   const scope = embedded ? config.sectionLabel : null
   return (
     <>
-      {view.lines.length > 0 && <LineStrip lines={view.lines} scope={scope} />}
+      {view.lines.length > 0 && <LineStrip lines={view.lines} scope={scope} selected={line?.key ?? null} onSelect={onPickLine} />}
       <ArcherSearch view={view} config={config} scope={scope} />
-      <Podiums divisions={view.divisions} lineByShooter={view.lineByShooter} config={config} embedded={embedded} />
+      <Podiums
+        divisions={view.divisions}
+        lineByShooter={view.lineByShooter}
+        config={config}
+        embedded={embedded}
+        line={line}
+        onClearLine={onClearLine}
+      />
     </>
   )
 }
@@ -129,6 +166,10 @@ export function HomeView({ config, note, embedded = false }: { config: EventConf
   const view = useMemo(() => buildEventView(rows ?? [], config), [rows, config])
   const finished = allLinesFinal(view)
   useEffect(() => setIdle(finished), [finished])
+  // Tapping a line shows only its archers; tapping it again (or Show all lines) clears it. Live event only.
+  const [lineKey, setLineKey] = useState<string | null>(null)
+  const line = view.lines.find((item) => item.key === lineKey) ?? null
+  const pickLine = config.live && !embedded ? (key: string) => setLineKey((current) => (current === key ? null : key)) : undefined
   const banner = note ?? (isUnconfigured(config) ? SCORING_SOON_NOTE : null)
 
   return (
@@ -137,7 +178,15 @@ export function HomeView({ config, note, embedded = false }: { config: EventConf
       {!isUnconfigured(config) && <StatusLine config={config} state={state} />}
       {preview && <PreviewBanner preview={preview} view={view} />}
       {banner && <p className="banner">{banner}</p>}
-      <Board config={config} state={state} view={view} embedded={embedded} />
+      <Board
+        config={config}
+        state={state}
+        view={view}
+        embedded={embedded}
+        line={line}
+        onPickLine={pickLine}
+        onClearLine={() => setLineKey(null)}
+      />
     </div>
   )
 }
