@@ -1,10 +1,11 @@
 import type { EventConfig, LineConfig } from '../lib/types'
 
-function weekendLines(fri: string, sat: string, sun: string): LineConfig[] {
+/** `joadAtSat1pm`: 2025's Sat 1 PM line was the JOAD line; 2026's is not. */
+function weekendLines(fri: string, sat: string, sun: string, joadAtSat1pm = false): LineConfig[] {
   return [
     { key: `${fri} 06:00 PM`, label: 'Fri 6:00 PM' },
     { key: `${sat} 08:00 AM`, label: 'Sat 8:00 AM' },
-    { key: `${sat} 01:00 PM`, label: 'Sat 1:00 PM', tag: 'JOAD line' },
+    { key: `${sat} 01:00 PM`, label: 'Sat 1:00 PM', ...(joadAtSat1pm ? { tag: 'JOAD line' } : {}) },
     { key: `${sat} 06:00 PM`, label: 'Sat 6:00 PM' },
     { key: `${sun} 09:00 AM`, label: 'Sun 9:00 AM' },
   ]
@@ -19,7 +20,7 @@ export const EVENT_2025: EventConfig = {
   tournamentId: 'QVRrY0JnUWtSTXJRdVBmN0xzWnBHQT09',
   // Finished: served from public/data/2025.json, so the site makes no EOS request.
   live: false,
-  lines: weekendLines('11-07-2025', '11-08-2025', '11-09-2025'),
+  lines: weekendLines('11-07-2025', '11-08-2025', '11-09-2025', true),
   closedLines: [],
   openLines: [],
   shootOffs: {},
