@@ -64,6 +64,11 @@ builds the site; it goes live a few minutes later. If a test fails, nothing depl
    Known gap: the past-results page for a year (`/past/2026/`) is built from `YEARS` and does not carry
    `shootOffs`, so once 2026 is no longer the current event its tied divisions show "Tie" again.
 6. **A push didn't deploy:** run `gh workflow run "Deploy to GitHub Pages" --ref main`.
+7. **Score check-in at the TD's table:** open https://aggieinvite.eyesonscore.com/checkin/ on the table
+   tablets and sign in with the crew login. Pick the time, tap a bale to see its archers, and mark it checked
+   once every card matches. Checkmarks sync between tablets through the `aggie-checkin` Supabase project.
+   The crew login is managed in Supabase (Authentication → Users), and public sign-ups stay off. Design:
+   `docs/superpowers/specs/2026-11-07-score-checkin-design.md`.
 
 ## Commands
 
