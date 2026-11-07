@@ -49,7 +49,9 @@ export const supabaseStore: CheckStore = {
   },
   subscribe(tournamentId, onChange) {
     const channel = supabase()
-      .channel(`bale-checks:${tournamentId}`)
+      // A unique topic each time: supabase-js hands back an existing channel of the same name, and one still
+      // closing after a quick sign-out and sign-in would leave this subscription silently dead.
+      .channel(`bale-checks:${tournamentId}:${crypto.randomUUID()}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: TABLE, filter: `tournament_id=eq.${tournamentId}` }, onChange)
       .subscribe((status) => {
         // Joining (or rejoining after a dropped socket) refetches, so a missed change can't leave a tablet stale.
@@ -68,8 +70,9 @@ export async function signIn(email: string, password: string): Promise<SignInRes
   return error ? { ok: false, message: error.message } : { ok: true }
 }
 
+/** Signs out this device only. The crew shares one account, so the default (every device) would sign out the whole table. */
 export async function signOut(): Promise<void> {
-  await supabase().auth.signOut()
+  await supabase().auth.signOut({ scope: 'local' })
 }
 
 /** Calls back once with whether a crew session exists now, then on every sign-in or sign-out. */

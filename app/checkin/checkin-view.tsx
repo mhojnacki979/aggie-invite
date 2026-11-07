@@ -69,11 +69,19 @@ function cardSubtitle(row: ArcherRow, view: EventView): string {
   return parts.filter((part): part is string => part !== undefined).join(' · ')
 }
 
-/** Which time and bale are picked. The time defaults to the one shooting now until someone picks another. */
-function useSelection(view: EventView) {
+/**
+ * Which time and bale are picked. The time opens on the one shooting now and then stays put: when the
+ * next line starts shooting, the crew mid-way through checking a finished time must not be moved off it.
+ */
+function useSelection(view: EventView, loaded: boolean) {
   const [picked, setPicked] = useState<string | null>(null)
   const [baleNumber, setBaleNumber] = useState<number | null | undefined>(undefined)
-  const lineKey = picked ?? defaultLineKey(view)
+  const fallback = defaultLineKey(view)
+  // Pin only once scores have arrived: before that every line looks unstarted and the first would win.
+  useEffect(() => {
+    if (loaded && picked === null && fallback !== null) setPicked(fallback)
+  }, [loaded, picked, fallback])
+  const lineKey = picked ?? fallback
   const bales = useMemo(() => (lineKey ? balesForLine(view, lineKey) : []), [view, lineKey])
   return {
     lineKey,
@@ -143,7 +151,7 @@ function Board() {
   const view = useMemo(() => buildEventView(state.rows ?? [], config), [state.rows])
   const checks = useBaleChecks(supabaseStore, config.tournamentId, true)
   const card = useScorecard(config)
-  const selection = useSelection(view)
+  const selection = useSelection(view, state.rows !== null)
   // The board keeps polling behind the popup, so show the archer's latest row, not the one tapped.
   const open = card.open && (view.divisions.flatMap((d) => d.rows).find((r) => r.shooterId === card.open?.shooterId) ?? card.open)
 

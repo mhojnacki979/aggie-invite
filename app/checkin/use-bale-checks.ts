@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { BaleCheck, CheckStore } from '@/lib/checkin-store'
+import { latestOnly } from '@/lib/latest-only'
 
 const SAVE_ERROR = "Couldn't save. Check the connection and try again."
 const LOAD_ERROR = "Couldn't load checkmarks. Retrying…"
@@ -25,14 +26,18 @@ export function useBaleChecks(store: CheckStore, tournamentId: string, enabled: 
   const [checks, setChecks] = useState<BaleCheck[]>([])
   const [error, setError] = useState<string | null>(null)
 
+  // Only the newest list request may land: a slow one can't put back a bale another tablet just undid.
+  const runList = useMemo(() => latestOnly<BaleCheck[]>(setChecks), [])
+
   const refresh = useCallback(async (): Promise<void> => {
     try {
-      setChecks(await store.list(tournamentId))
-      setError(null)
+      await runList(() => store.list(tournamentId))
+      // A good read clears a load error, never a save error: the crew must see that their tap didn't save.
+      setError((current) => (current === LOAD_ERROR ? null : current))
     } catch {
       setError(LOAD_ERROR)
     }
-  }, [store, tournamentId])
+  }, [runList, store, tournamentId])
 
   useEffect(() => {
     if (!enabled) return
