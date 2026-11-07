@@ -10,7 +10,10 @@ import type { DivisionView, EventView, LineView } from '@/lib/status'
 import type { FetchState } from '@/lib/fetch-state'
 import type { ArcherRow, EventConfig } from '@/lib/types'
 import { isUnconfigured, useEventData } from '@/lib/use-event-data'
+import { useFavorites } from '@/lib/use-favorites'
+import type { Favorites } from '@/lib/use-favorites'
 import { ArcherSearch } from './archer-search'
+import { FavoritesBox } from './favorites-box'
 import { divisionHref } from './format'
 import { LineStrip } from './line-strip'
 import { PodiumCard } from './podium-card'
@@ -120,16 +123,19 @@ interface BoardProps {
   /** Set only for a live event: its lines can be picked. */
   onPickLine?: (key: string) => void
   onClearLine: () => void
+  /** Set only for a live event's own page: "Your archers" and the search stars. */
+  favorites: Favorites | null
 }
 
-function Board({ config, state, view, embedded, line, onPickLine, onClearLine }: BoardProps) {
+function Board({ config, state, view, embedded, line, onPickLine, onClearLine, favorites }: BoardProps) {
   if (!isUnconfigured(config) && state.rows === null) return <p className="muted">{loadingText(config, state)}</p>
   // Several boards on one page (2022) would repeat the same landmark names, so each says which section it is.
   const scope = embedded ? config.sectionLabel : null
   return (
     <>
       {view.lines.length > 0 && <LineStrip lines={view.lines} scope={scope} selected={line?.key ?? null} onSelect={onPickLine} />}
-      <ArcherSearch view={view} config={config} scope={scope} />
+      {favorites && <FavoritesBox view={view} config={config} favorites={favorites} />}
+      <ArcherSearch view={view} config={config} scope={scope} favorites={favorites} />
       <Podiums
         divisions={view.divisions}
         lineByShooter={view.lineByShooter}
@@ -171,6 +177,7 @@ export function HomeView({ config, note, embedded = false }: { config: EventConf
   const line = view.lines.find((item) => item.key === lineKey) ?? null
   const pickLine = config.live && !embedded ? (key: string) => setLineKey((current) => (current === key ? null : key)) : undefined
   const banner = note ?? (isUnconfigured(config) ? SCORING_SOON_NOTE : null)
+  const favorites = useFavorites(config, config.live && !embedded)
 
   return (
     <div className="page">
@@ -186,6 +193,7 @@ export function HomeView({ config, note, embedded = false }: { config: EventConf
         line={line}
         onPickLine={pickLine}
         onClearLine={() => setLineKey(null)}
+        favorites={favorites}
       />
     </div>
   )

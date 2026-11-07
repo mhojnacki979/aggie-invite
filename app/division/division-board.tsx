@@ -10,6 +10,7 @@ import { allLinesFinal, buildEventView } from '@/lib/status'
 import type { DivisionView, EventView } from '@/lib/status'
 import type { ArcherRow, EventConfig } from '@/lib/types'
 import { isUnconfigured, useEventData } from '@/lib/use-event-data'
+import { useFavorites } from '@/lib/use-favorites'
 import { ScorecardModal } from '../components/scorecard-modal'
 import { DivisionBadge } from '../home/division-badge'
 import { archerCount } from '../home/format'
@@ -67,6 +68,7 @@ function cardSubtitle(row: ArcherRow, division: DivisionView, view: EventView): 
 function Loaded({ config, division, view, state }: { config: EventConfig; division: DivisionView; view: EventView; state: FetchState }) {
   const highlightId = useSearchParams().get('a')
   const card = useScorecard(config)
+  const favorites = useFavorites(config, config.live)
   // The board keeps polling behind the modal, so show the archer's latest row, not the one tapped.
   const open = card.open && (division.rows.find((row) => row.shooterId === card.open?.shooterId) ?? card.open)
   return (
@@ -88,6 +90,7 @@ function Loaded({ config, division, view, state }: { config: EventConfig; divisi
           view={card.view}
           onClose={card.close}
           onRetry={card.retry}
+          favorite={favorites ? { on: favorites.has(open.shooterId), toggle: () => favorites.toggle(open.shooterId) } : undefined}
         />
       )}
     </div>

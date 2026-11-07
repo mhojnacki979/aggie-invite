@@ -56,8 +56,15 @@
   outline-offset: 2px;
 }
 
-.sc-name {
+/* Name and favorite star share a line; the padding keeps both clear of the close button. */
+.sc-title {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   padding-right: 40px;
+}
+
+.sc-name {
   font-size: 20px;
   line-height: 1.2;
   overflow-wrap: anywhere;
@@ -78,6 +85,7 @@
 
 .sc-stat {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   padding: 7px 10px;
@@ -162,6 +170,19 @@
   background: var(--bg);
   text-align: center;
   font-variant-numeric: tabular-nums;
+}
+
+/* Round subtotals and the final total, between the ends. */
+.sc-ends .sc-subtotal th,
+.sc-ends .sc-subtotal td {
+  background: var(--bg);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.sc-ends tbody .sc-subtotal th {
+  text-align: left;
+  color: var(--text);
 }
 
 /* Read aloud, not shown: the visible loading and error text already says the same. */

@@ -198,7 +198,8 @@
     font-size: 22px;
   }
 
-  .dv-round,
+  /* The two round columns stay on a phone (Michael, 2026-11-07); four (2022 Double FITA) don't fit. */
+  .dv-many-rounds .dv-round,
   .dv-nines {
     display: none;
   }

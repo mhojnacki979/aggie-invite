@@ -20,3 +20,21 @@ export function archerMeta(row: ArcherRow, line: LineView | undefined): string {
   const parts = [line?.label, row.target, line?.tag]
   return parts.filter((part): part is string => part !== undefined && part !== '').join(' · ')
 }
+
+/** Arrows in each round, or null when arrows due doesn't split evenly (then nothing is inferred). */
+function arrowsPerRound(row: ArcherRow, roundCount: number): number | null {
+  const perRound = row.arrowsDue / roundCount
+  return row.arrowsDue > 0 && Number.isInteger(perRound) ? perRound : null
+}
+
+/**
+ * One round's score from EOS, or null for a round the archer hasn't reached. EOS sends 0 for a
+ * round not yet shot; null lets the board show a dash there instead of a score of 0.
+ */
+export function roundScore(row: ArcherRow, index: number, roundCount: number): number | null {
+  const score = row.rounds[index]
+  if (score === undefined) return null
+  const perRound = arrowsPerRound(row, roundCount)
+  if (perRound !== null && row.arrowsShot <= index * perRound) return null
+  return score
+}

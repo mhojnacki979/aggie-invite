@@ -205,13 +205,22 @@
   margin-top: 8px;
 }
 
+/* A result row: the optional favorite star, then the link to the archer's division board. */
+.hit-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-top: 1px solid var(--line);
+}
+
 .hit {
+  flex: 1;
+  min-width: 0;
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
   gap: 4px 12px;
   padding: 9px 4px;
-  border-top: 1px solid var(--line);
   text-decoration: none;
 }
 
@@ -242,6 +251,20 @@
 
 .hit .badges {
   grid-column: 1 / -1;
+}
+
+/* ---------- Your archers (favorites) ---------- */
+
+.favorites .search-label {
+  margin: 0 0 6px;
+}
+
+.favorites .search-label span {
+  color: var(--gold);
+}
+
+.favorites .hits {
+  margin-top: 0;
 }
 
 /* ---------- Podiums ---------- */
