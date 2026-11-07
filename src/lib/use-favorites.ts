@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { favoritesKey, readFavorites, toggleFavorite, writeFavorites } from './favorites'
+import { browserStorage, favoritesKey, readFavorites, toggleFavorite, writeFavorites } from './favorites'
 import type { EventConfig } from './types'
 
 export interface Favorites {
@@ -21,11 +21,12 @@ export function useFavorites(config: EventConfig, enabled: boolean): Favorites |
   const [ids, setIds] = useState<string[]>([])
 
   useEffect(() => {
-    if (!enabled) return
-    setIds(readFavorites(window.localStorage, key))
+    const storage = browserStorage()
+    if (!enabled || storage === null) return
+    setIds(readFavorites(storage, key))
     // Another tab changing the list (favorited on the division page, say) shows up here too.
     const onStorage = (event: StorageEvent): void => {
-      if (event.key === key) setIds(readFavorites(window.localStorage, key))
+      if (event.key === key) setIds(readFavorites(storage, key))
     }
     window.addEventListener('storage', onStorage)
     return () => window.removeEventListener('storage', onStorage)
@@ -35,7 +36,8 @@ export function useFavorites(config: EventConfig, enabled: boolean): Favorites |
     (shooterId: string): void => {
       setIds((current) => {
         const next = toggleFavorite(current, shooterId)
-        writeFavorites(window.localStorage, key, next)
+        const storage = browserStorage()
+        if (storage !== null) writeFavorites(storage, key, next)
         return next
       })
     },

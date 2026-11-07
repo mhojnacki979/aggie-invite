@@ -15,7 +15,7 @@ export function FavoriteStar({ name, on, onToggle }: StarProps) {
       type="button"
       className={on ? 'fav-star fav-on' : 'fav-star'}
       aria-pressed={on}
-      aria-label={on ? `Remove ${name} from your archers` : `Add ${name} to your archers`}
+      aria-label={`${name} in your archers`}
       onClick={onToggle}
     >
       {on ? '★' : '☆'}

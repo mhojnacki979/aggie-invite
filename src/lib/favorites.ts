@@ -8,6 +8,18 @@ export type StorageLike = Pick<Storage, 'getItem' | 'setItem'>
 
 const savedSchema = z.array(z.unknown())
 
+/**
+ * The browser's localStorage, or null where reading the property itself throws (site data blocked,
+ * some in-app browsers). Favorites then simply don't save.
+ */
+export function browserStorage(): StorageLike | null {
+  try {
+    return window.localStorage
+  } catch {
+    return null
+  }
+}
+
 /** Shooter ids only mean something inside one tournament, so each tournament keeps its own list. */
 export function favoritesKey(config: EventConfig): string {
   return `aggie-favorites:${config.tournamentId}`

@@ -72,7 +72,11 @@ function GroupRows({ group, reached }: { group: RoundGroup; reached: boolean }) 
   )
 }
 
-/** End by end, with a subtotal after each round (ends 1–10, 11–20) and the final total once the archer is done. */
+/**
+ * End by end, with a subtotal after each round (ends 1–10, 11–20) and the final total once the archer
+ * is done. The card is cached for a minute while the board keeps polling, so the final total waits
+ * until the card's own ends add up to the board's total.
+ */
 function Ends({ ends, row }: { ends: EndScore[]; row: ArcherRow }) {
   const roundCount = roundCountFor(row)
   const groups = roundGroups(ends, row.arrowsDue, roundCount)
@@ -91,7 +95,7 @@ function Ends({ ends, row }: { ends: EndScore[]; row: ArcherRow }) {
         {groups.map((group, index) => (
           <GroupRows key={group.firstEnd} group={group} reached={roundScore(row, index, roundCount) !== null} />
         ))}
-        {isDone(row) && last && <TotalRow label="Final total" value={last.running} />}
+        {isDone(row) && last?.running === row.total && <TotalRow label="Final total" value={last.running} />}
       </tbody>
     </table>
   )

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { favoriteHits, favoritesKey, readFavorites, toggleFavorite, writeFavorites } from './favorites'
+import { browserStorage, favoriteHits, favoritesKey, readFavorites, toggleFavorite, writeFavorites } from './favorites'
 import type { StorageLike } from './favorites'
 import type { DivisionView, EventView } from './status'
 import type { ArcherRow, EventConfig } from './types'
@@ -101,5 +101,25 @@ describe('favoriteHits', () => {
 
   it('skips a favorite no longer on the scoreboard', () => {
     expect(favoriteHits(eventView([row('1', 1)]), ['9', '1'])).toHaveLength(1)
+  })
+})
+
+describe('browserStorage', () => {
+  it('is null when reading localStorage throws, instead of crashing the page', () => {
+    const original = Object.getOwnPropertyDescriptor(globalThis, 'window')
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: Object.defineProperty({}, 'localStorage', {
+        get: () => {
+          throw new Error('SecurityError')
+        },
+      }),
+    })
+    try {
+      expect(browserStorage()).toBeNull()
+    } finally {
+      if (original) Object.defineProperty(globalThis, 'window', original)
+      else Reflect.deleteProperty(globalThis, 'window')
+    }
   })
 })
