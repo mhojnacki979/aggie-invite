@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { archerMeta, roundCountOf, roundHeadings, roundScore } from './board-columns'
+import { archerMeta, arrowAverage, formatAverage, roundCountOf, roundHeadings, roundScore, sortRows } from './board-columns'
 import type { LineView } from './status'
 import type { ArcherRow } from './types'
 
@@ -82,5 +82,59 @@ describe('roundScore', () => {
 
   it('trusts EOS when arrows due does not split evenly into rounds', () => {
     expect(roundScore(row({ rounds: [10, 0], arrowsShot: 3, arrowsDue: 0 }), 1, 2)).toBe(0)
+  })
+})
+
+describe('arrowAverage', () => {
+  it('is the total over arrows shot so far', () => {
+    expect(arrowAverage(row({ total: 587, arrowsShot: 60 }))).toBeCloseTo(9.7833, 4)
+    expect(arrowAverage(row({ total: 147, arrowsShot: 15 }))).toBeCloseTo(9.8, 4)
+  })
+
+  it('is null before the first arrow', () => {
+    expect(arrowAverage(row({ total: 0, arrowsShot: 0 }))).toBeNull()
+  })
+})
+
+describe('formatAverage', () => {
+  it('shows two decimals, the way EOS does', () => {
+    expect(formatAverage(587 / 60)).toBe('9.78')
+    expect(formatAverage(10)).toBe('10.00')
+  })
+})
+
+describe('sortRows', () => {
+  const leader = row({ shooterId: 'leader', rank: 1, total: 580, arrowsShot: 60 }) // 9.67
+  const midLine = row({ shooterId: 'mid', rank: 2, total: 295, arrowsShot: 30 }) // 9.83
+  const steady = row({ shooterId: 'steady', rank: 3, total: 290, arrowsShot: 30 }) // 9.67, same as leader
+  const noShow = row({ shooterId: 'none', rank: 4, total: 0, arrowsShot: 0 })
+  const board = [leader, midLine, steady, noShow]
+  const ids = (rows: ArcherRow[]) => rows.map((r) => r.shooterId)
+
+  it('keeps the official order when sorted by score', () => {
+    expect(ids(sortRows(board, 'score'))).toEqual(['leader', 'mid', 'steady', 'none'])
+  })
+
+  it('orders by arrow average, a tie keeping the official order, and no-shows last', () => {
+    expect(ids(sortRows([noShow, steady, midLine, leader], 'average'))).toEqual(['mid', 'leader', 'steady', 'none'])
+  })
+
+  it('compares the exact average, not the two-decimal display', () => {
+    const a = row({ shooterId: 'a', rank: 1, total: 586, arrowsShot: 60 }) // 9.7666…
+    const b = row({ shooterId: 'b', rank: 2, total: 293, arrowsShot: 30 }) // 9.7666… exactly equal
+    const c = row({ shooterId: 'c', rank: 3, total: 577, arrowsShot: 59 }) // 9.7796…, shows 9.78
+    expect(ids(sortRows([a, b, c], 'average'))).toEqual(['c', 'a', 'b'])
+  })
+
+  it('keeps several no-shows in official order', () => {
+    const late = row({ shooterId: 'late', rank: 6, total: 0, arrowsShot: 0 })
+    const later = row({ shooterId: 'later', rank: 7, total: 0, arrowsShot: 0 })
+    expect(ids(sortRows([later, late, midLine], 'average'))).toEqual(['mid', 'late', 'later'])
+  })
+
+  it('leaves the given array alone', () => {
+    const copy = [...board]
+    sortRows(board, 'average')
+    expect(board).toEqual(copy)
   })
 })
