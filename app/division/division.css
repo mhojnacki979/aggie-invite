@@ -160,6 +160,25 @@
   overflow-wrap: anywhere;
 }
 
+/* Live event: the favorite star sits before the name, and taps on it don't open the scorecard. */
+.dv-fav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: -8px;
+}
+
+.dv-who {
+  flex: 1;
+  min-width: 0;
+}
+
+.dv-fav .fav-star {
+  width: 30px;
+  height: 36px;
+  font-size: 19px;
+}
+
 .dv-tappable {
   cursor: pointer;
 }
