@@ -1,45 +1,25 @@
 'use client'
 
-import Link from 'next/link'
 import { useId, useMemo, useState } from 'react'
 import { searchArchers } from '@/lib/search'
-import type { ArcherHit } from '@/lib/search'
 import type { EventView } from '@/lib/status'
 import type { EventConfig } from '@/lib/types'
-import { DivisionBadge } from './division-badge'
-import { divisionHref, ordinal } from './format'
+import type { Favorites } from '@/lib/use-favorites'
+import { ArcherHitRow } from './archer-hit'
 
 const RESULT_LIMIT = 20
 const MIN_QUERY = 2
 
-function lineText(hit: ArcherHit): string {
-  const parts = [hit.division.display.label]
-  if (hit.line) parts.push(hit.line.tag ? `${hit.line.label} · ${hit.line.tag}` : hit.line.label)
-  parts.push(`Target ${hit.row.target}`)
-  return parts.join(' · ')
-}
-
-function ResultRow({ hit, config }: { hit: ArcherHit; config: EventConfig }) {
-  const started = hit.row.arrowsShot > 0
-  return (
-    <li>
-      <Link href={divisionHref(config, hit.division.display.slug, hit.row.shooterId)} className="hit">
-        <span className="hit-main">
-          <b>{hit.row.name}</b>
-          <span className="hit-meta">{lineText(hit)}</span>
-        </span>
-        <span className="hit-score">
-          <span className="num">{started ? hit.row.total : '—'}</span>
-          <span className="hit-place">{started ? ordinal(hit.place) : 'Not started'}</span>
-        </span>
-        <DivisionBadge division={hit.division} />
-      </Link>
-    </li>
-  )
+interface SearchProps {
+  view: EventView
+  config: EventConfig
+  scope?: string | null
+  /** Null where favorites are off; otherwise each result gets a star. */
+  favorites?: Favorites | null
 }
 
 /** Find an archer by name; each result opens that archer's division board. */
-export function ArcherSearch({ view, config, scope = null }: { view: EventView; config: EventConfig; scope?: string | null }) {
+export function ArcherSearch({ view, config, scope = null, favorites = null }: SearchProps) {
   const [query, setQuery] = useState('')
   const inputId = useId()
   const hits = useMemo(() => searchArchers(view, query, RESULT_LIMIT), [view, query])
@@ -62,7 +42,7 @@ export function ArcherSearch({ view, config, scope = null }: { view: EventView; 
       {hits.length > 0 && (
         <ul className="hits">
           {hits.map((hit) => (
-            <ResultRow key={hit.row.shooterId} hit={hit} config={config} />
+            <ArcherHitRow key={hit.row.shooterId} hit={hit} config={config} favorites={favorites} />
           ))}
         </ul>
       )}

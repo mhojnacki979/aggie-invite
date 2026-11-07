@@ -3,7 +3,12 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode, RefObject } from 'react'
 import { createPortal } from 'react-dom'
+import { DEFAULT_ROUNDS, roundHeadings, roundScore } from '@/lib/board-columns'
+import { roundGroups } from '@/lib/scorecard-rounds'
+import type { RoundGroup } from '@/lib/scorecard-rounds'
+import { isDone } from '@/lib/status'
 import type { ArcherRow, EndScore, Scorecard } from '@/lib/types'
+import { FavoriteStar } from './favorite-star'
 import { makeInert } from './inert'
 import './scorecard-modal.css'
 
@@ -17,8 +22,65 @@ export const BUSY_TEXT = 'Scores are busy right now. Tap to try again.'
 export const ERROR_TEXT = "Couldn't load this scorecard. Try again."
 export const LOADING_TEXT = 'Loading scorecard…'
 const EMPTY_TEXT = 'No scorecard on file for this archer.'
+const NO_SCORE = '—'
 
-function Ends({ ends }: { ends: EndScore[] }) {
+/** Round columns the board has for this archer; a row with no rounds yet falls back to the usual two. */
+function roundCountFor(row: ArcherRow): number {
+  return row.rounds.length > 0 ? row.rounds.length : DEFAULT_ROUNDS
+}
+
+function EndRow({ end, number }: { end: EndScore; number: number }) {
+  return (
+    <tr>
+      <th scope="row" className="num">
+        {number}
+      </th>
+      <td className="sc-arrows">
+        {end.arrows.map((arrow, i) => (
+          <span key={i} className="sc-arrow">
+            {arrow}
+          </span>
+        ))}
+      </td>
+      <td className="num">{end.score}</td>
+      <td className="num">{end.running}</td>
+    </tr>
+  )
+}
+
+/** A full-width total row under the ends: a round's subtotal, or the final total. */
+function TotalRow({ label, value }: { label: string; value: number | string }) {
+  return (
+    <tr className="sc-subtotal">
+      <th scope="row" colSpan={3}>
+        {label}
+      </th>
+      <td className="num">{value}</td>
+    </tr>
+  )
+}
+
+/** `reached` is false for a round the archer hasn't started: EOS sends its ends blank, and its subtotal reads as a dash. */
+function GroupRows({ group, reached }: { group: RoundGroup; reached: boolean }) {
+  return (
+    <>
+      {group.ends.map((end, index) => (
+        <EndRow key={group.firstEnd + index} end={end} number={group.firstEnd + index} />
+      ))}
+      {group.heading !== null && <TotalRow label={group.heading} value={reached ? group.subtotal : NO_SCORE} />}
+    </>
+  )
+}
+
+/**
+ * End by end, with a subtotal after each round (ends 1–10, 11–20) and the final total once the archer
+ * is done. The card is cached for a minute while the board keeps polling, so the final total waits
+ * until the card's own ends add up to the board's total.
+ */
+function Ends({ ends, row }: { ends: EndScore[]; row: ArcherRow }) {
+  const roundCount = roundCountFor(row)
+  const groups = roundGroups(ends, row.arrowsDue, roundCount)
+  const last = ends[ends.length - 1]
   return (
     <table className="sc-ends">
       <thead>
@@ -30,28 +92,16 @@ function Ends({ ends }: { ends: EndScore[] }) {
         </tr>
       </thead>
       <tbody>
-        {ends.map((end, index) => (
-          <tr key={index}>
-            <th scope="row" className="num">
-              {index + 1}
-            </th>
-            <td className="sc-arrows">
-              {end.arrows.map((arrow, i) => (
-                <span key={i} className="sc-arrow">
-                  {arrow}
-                </span>
-              ))}
-            </td>
-            <td className="num">{end.score}</td>
-            <td className="num">{end.running}</td>
-          </tr>
+        {groups.map((group, index) => (
+          <GroupRows key={group.firstEnd} group={group} reached={roundScore(row, index, roundCount) !== null} />
         ))}
+        {isDone(row) && last?.running === row.total && <TotalRow label="Final total" value={last.running} />}
       </tbody>
     </table>
   )
 }
 
-function Body({ view, onRetry }: { view: CardView; onRetry: () => void }) {
+function Body({ view, row, onRetry }: { view: CardView; row: ArcherRow; onRetry: () => void }) {
   if (view.kind === 'loading') return <p className="sc-note">{LOADING_TEXT}</p>
   if (view.kind === 'error') {
     return (
@@ -61,7 +111,7 @@ function Body({ view, onRetry }: { view: CardView; onRetry: () => void }) {
     )
   }
   if (view.card === null || view.card.ends.length === 0) return <p className="sc-note">{EMPTY_TEXT}</p>
-  return <Ends ends={view.card.ends} />
+  return <Ends ends={view.card.ends} row={row} />
 }
 
 function Stat({ label, value }: { label: string; value: ReactNode }) {
@@ -69,6 +119,29 @@ function Stat({ label, value }: { label: string; value: ReactNode }) {
     <div className="sc-stat">
       <span className="sc-stat-label">{label}</span>
       <span className="num sc-stat-value">{value}</span>
+    </div>
+  )
+}
+
+/** 1st 30, 2nd 30, Total, 10s for the usual two rounds; any other format keeps Total, 10s, 9s. */
+function Stats({ row }: { row: ArcherRow }) {
+  const roundCount = roundCountFor(row)
+  if (roundCount !== DEFAULT_ROUNDS) {
+    return (
+      <div className="sc-stats">
+        <Stat label="Total" value={row.total} />
+        <Stat label="10s" value={row.tens} />
+        <Stat label="9s" value={row.nines} />
+      </div>
+    )
+  }
+  return (
+    <div className="sc-stats">
+      {roundHeadings(roundCount).map((heading, index) => (
+        <Stat key={heading} label={heading} value={roundScore(row, index, roundCount) ?? NO_SCORE} />
+      ))}
+      <Stat label="Total" value={row.total} />
+      <Stat label="10s" value={row.tens} />
     </div>
   )
 }
@@ -161,10 +234,12 @@ interface ModalProps {
   view: CardView
   onClose: () => void
   onRetry: () => void
+  /** Set on a live event: a star next to the name adds the archer to "Your archers". */
+  favorite?: { on: boolean; toggle: () => void }
 }
 
-/** One archer's end-by-end scorecard over the board. Total, 10s and 9s come from the board row. */
-export function ScorecardModal({ row, subtitle, view, onClose, onRetry }: ModalProps) {
+/** One archer's end-by-end scorecard over the board. The boxes at the top come from the board row. */
+export function ScorecardModal({ row, subtitle, view, onClose, onRetry, favorite }: ModalProps) {
   const titleId = useId()
   const refs = useDialogBehavior(onClose)
   // Rendered into <body> so the whole page (header, main, footer) can be made inert behind it.
@@ -187,17 +262,16 @@ export function ScorecardModal({ row, subtitle, view, onClose, onRetry }: ModalP
         <button ref={refs.close} type="button" className="sc-close" onClick={onClose} aria-label="Close scorecard">
           ×
         </button>
-        <h2 id={titleId} className="sc-name">
-          {row.name}
-        </h2>
-        <p className="sc-sub">{subtitle}</p>
-        <div className="sc-stats">
-          <Stat label="Total" value={row.total} />
-          <Stat label="10s" value={row.tens} />
-          <Stat label="9s" value={row.nines} />
+        <div className="sc-title">
+          <h2 id={titleId} className="sc-name">
+            {row.name}
+          </h2>
+          {favorite && <FavoriteStar name={row.name} on={favorite.on} onToggle={favorite.toggle} />}
         </div>
+        <p className="sc-sub">{subtitle}</p>
+        <Stats row={row} />
         <Announcer view={view} />
-        <Body view={view} onRetry={onRetry} />
+        <Body view={view} row={row} onRetry={onRetry} />
       </div>
     </div>,
     document.body,

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { archerMeta, roundCountOf, roundHeadings } from '@/lib/board-columns'
+import { DEFAULT_ROUNDS, archerMeta, roundCountOf, roundHeadings, roundScore } from '@/lib/board-columns'
 import type { DivisionView, LineView } from '@/lib/status'
 import type { ArcherRow } from '@/lib/types'
 
@@ -47,7 +47,7 @@ function ArcherCell({ row, line, started, pending }: { row: ArcherRow; line: Lin
 function BoardRow({ row, line, roundCount, highlighted, pending, unstartedAsZero, onOpen }: RowProps) {
   const started = row.arrowsShot > 0
   const blank = unstartedAsZero ? 0 : NO_SCORE
-  const score = (value: number | undefined): string | number => (started ? (value ?? NO_SCORE) : blank)
+  const score = (value: number | null | undefined): string | number => (started ? (value ?? NO_SCORE) : blank)
   const tap = started ? () => (pending ? undefined : onOpen(row)) : undefined
   const ref = useRef<HTMLTableRowElement>(null)
   // Arriving from a search hit: bring that archer's row into view once, not on every poll.
@@ -60,7 +60,7 @@ function BoardRow({ row, line, roundCount, highlighted, pending, unstartedAsZero
       <ArcherCell row={row} line={line} started={started} pending={pending} />
       {Array.from({ length: roundCount }, (_, index) => (
         <td key={index} className="num dv-round">
-          {score(row.rounds[index])}
+          {score(roundScore(row, index, roundCount))}
         </td>
       ))}
       <td className="num dv-total">{score(row.total)}</td>
@@ -80,12 +80,15 @@ interface TableProps {
   onOpen: (row: ArcherRow) => void
 }
 
-/** The full board for one division. Round columns and 9s drop out under 480px (see division.css). */
+/**
+ * The full board for one division. Under 480px 9s drops out, and so do the round columns when there
+ * are more than two of them (the 2022 Double FITA's four don't fit a phone). See division.css.
+ */
 export function DivisionTable({ division, lineByShooter, highlightId, pending, unstartedAsZero, onOpen }: TableProps) {
   const roundCount = roundCountOf(division.rows)
   return (
     <div className="dv-scroll">
-      <table className="dv-table">
+      <table className={roundCount > DEFAULT_ROUNDS ? 'dv-table dv-many-rounds' : 'dv-table'}>
         <thead>
           <tr>
             <th scope="col">#</th>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { archerMeta, roundCountOf, roundHeadings } from './board-columns'
+import { archerMeta, roundCountOf, roundHeadings, roundScore } from './board-columns'
 import type { LineView } from './status'
 import type { ArcherRow } from './types'
 
@@ -61,5 +61,26 @@ describe('archerMeta', () => {
   it('still shows the target when the archer has no line', () => {
     expect(archerMeta(row({}), undefined)).toBe('23B')
     expect(archerMeta(row({ target: '' }), undefined)).toBe('')
+  })
+})
+
+describe('roundScore', () => {
+  it('reads each round from EOS once the archer has started it', () => {
+    expect(roundScore(row({ rounds: [152, 149] }), 0, 2)).toBe(152)
+    expect(roundScore(row({ rounds: [152, 149] }), 1, 2)).toBe(149)
+  })
+
+  it('is null for a round the archer has not reached, so it reads as a dash, not 0', () => {
+    const halfway = row({ rounds: [152, 0], arrowsShot: 30 })
+    expect(roundScore(halfway, 1, 2)).toBeNull()
+    expect(roundScore(row({ rounds: [152, 27], arrowsShot: 33 }), 1, 2)).toBe(27)
+  })
+
+  it('is null when EOS sent no score for that round', () => {
+    expect(roundScore(row({ rounds: [152] }), 1, 2)).toBeNull()
+  })
+
+  it('trusts EOS when arrows due does not split evenly into rounds', () => {
+    expect(roundScore(row({ rounds: [10, 0], arrowsShot: 3, arrowsDue: 0 }), 1, 2)).toBe(0)
   })
 })

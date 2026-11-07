@@ -1,0 +1,23 @@
+/* ---------- Favorite star ---------- */
+
+.fav-star {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.fav-star.fav-on {
+  color: var(--gold);
+}
+
+.fav-star:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
