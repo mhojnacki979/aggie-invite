@@ -81,6 +81,7 @@ function Loaded({ config, division, view, state }: { config: EventConfig; divisi
         highlightId={highlightId}
         pending={card.pending}
         unstartedAsZero={config.live}
+        favorites={favorites}
         onOpen={card.show}
       />
       {open && (
@@ -90,7 +91,6 @@ function Loaded({ config, division, view, state }: { config: EventConfig; divisi
           view={card.view}
           onClose={card.close}
           onRetry={card.retry}
-          favorite={favorites ? { on: favorites.has(open.shooterId), toggle: () => favorites.toggle(open.shooterId) } : undefined}
         />
       )}
     </div>

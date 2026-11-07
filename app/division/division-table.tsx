@@ -4,6 +4,8 @@ import { useEffect, useRef } from 'react'
 import { DEFAULT_ROUNDS, archerMeta, roundCountOf, roundHeadings, roundScore } from '@/lib/board-columns'
 import type { DivisionView, LineView } from '@/lib/status'
 import type { ArcherRow } from '@/lib/types'
+import type { Favorites } from '@/lib/use-favorites'
+import { FavoriteStar } from '../components/favorite-star'
 
 const NO_SCORE = '—'
 
@@ -14,6 +16,7 @@ interface RowProps {
   highlighted: boolean
   pending: boolean
   unstartedAsZero: boolean
+  favorites: Favorites | null
   onOpen: (row: ArcherRow) => void
 }
 
@@ -23,7 +26,15 @@ function rowClass(started: boolean, highlighted: boolean, pending: boolean): str
     .join(' ')
 }
 
-function ArcherCell({ row, line, started, pending }: { row: ArcherRow; line: LineView | undefined; started: boolean; pending: boolean }) {
+interface CellProps {
+  row: ArcherRow
+  line: LineView | undefined
+  started: boolean
+  pending: boolean
+  favorites: Favorites | null
+}
+
+function ArcherCell({ row, line, started, pending, favorites }: CellProps) {
   const content = (
     <>
       <span className="dv-name">{row.name}</span>
@@ -31,20 +42,26 @@ function ArcherCell({ row, line, started, pending }: { row: ArcherRow; line: Lin
     </>
   )
   // The whole row takes the tap (see BoardRow); this button is what keyboards and screen readers reach.
+  const name = started ? (
+    <button type="button" className="dv-open" aria-disabled={pending} aria-haspopup="dialog">
+      {content}
+    </button>
+  ) : (
+    content
+  )
+  if (!favorites) return <td className="dv-archer">{name}</td>
+  // With the star in front, the name and meta stay stacked in their own box.
   return (
     <td className="dv-archer">
-      {started ? (
-        <button type="button" className="dv-open" aria-disabled={pending} aria-haspopup="dialog">
-          {content}
-        </button>
-      ) : (
-        content
-      )}
+      <span className="dv-fav">
+        <FavoriteStar name={row.name} on={favorites.has(row.shooterId)} onToggle={() => favorites.toggle(row.shooterId)} />
+        <span className="dv-who">{name}</span>
+      </span>
     </td>
   )
 }
 
-function BoardRow({ row, line, roundCount, highlighted, pending, unstartedAsZero, onOpen }: RowProps) {
+function BoardRow({ row, line, roundCount, highlighted, pending, unstartedAsZero, favorites, onOpen }: RowProps) {
   const started = row.arrowsShot > 0
   const blank = unstartedAsZero ? 0 : NO_SCORE
   const score = (value: number | null | undefined): string | number => (started ? (value ?? NO_SCORE) : blank)
@@ -57,7 +74,7 @@ function BoardRow({ row, line, roundCount, highlighted, pending, unstartedAsZero
   return (
     <tr ref={ref} className={rowClass(started, highlighted, pending)} onClick={tap} aria-current={highlighted ? 'true' : undefined}>
       <td className="num dv-rank">{started ? score(row.rank) : NO_SCORE}</td>
-      <ArcherCell row={row} line={line} started={started} pending={pending} />
+      <ArcherCell row={row} line={line} started={started} pending={pending} favorites={favorites} />
       {Array.from({ length: roundCount }, (_, index) => (
         <td key={index} className="num dv-round">
           {score(roundScore(row, index, roundCount))}
@@ -77,6 +94,8 @@ interface TableProps {
   pending: ReadonlySet<string>
   /** A live event shows an archer who hasn't shot at 0; a finished year keeps the dash for no-shows. */
   unstartedAsZero: boolean
+  /** Set on a live event: a star on each row adds the archer to "Your archers" on the home page. */
+  favorites: Favorites | null
   onOpen: (row: ArcherRow) => void
 }
 
@@ -84,7 +103,7 @@ interface TableProps {
  * The full board for one division. Under 480px 9s drops out, and so do the round columns when there
  * are more than two of them (the 2022 Double FITA's four don't fit a phone). See division.css.
  */
-export function DivisionTable({ division, lineByShooter, highlightId, pending, unstartedAsZero, onOpen }: TableProps) {
+export function DivisionTable({ division, lineByShooter, highlightId, pending, unstartedAsZero, favorites, onOpen }: TableProps) {
   const roundCount = roundCountOf(division.rows)
   return (
     <div className="dv-scroll">
@@ -117,6 +136,7 @@ export function DivisionTable({ division, lineByShooter, highlightId, pending, u
               highlighted={row.shooterId === highlightId}
               unstartedAsZero={unstartedAsZero}
               pending={pending.has(row.shooterId)}
+              favorites={favorites}
               onOpen={onOpen}
             />
           ))}

@@ -8,7 +8,6 @@ import { roundGroups } from '@/lib/scorecard-rounds'
 import type { RoundGroup } from '@/lib/scorecard-rounds'
 import { isDone } from '@/lib/status'
 import type { ArcherRow, EndScore, Scorecard } from '@/lib/types'
-import { FavoriteStar } from './favorite-star'
 import { makeInert } from './inert'
 import './scorecard-modal.css'
 
@@ -234,12 +233,10 @@ interface ModalProps {
   view: CardView
   onClose: () => void
   onRetry: () => void
-  /** Set on a live event: a star next to the name adds the archer to "Your archers". */
-  favorite?: { on: boolean; toggle: () => void }
 }
 
 /** One archer's end-by-end scorecard over the board. The boxes at the top come from the board row. */
-export function ScorecardModal({ row, subtitle, view, onClose, onRetry, favorite }: ModalProps) {
+export function ScorecardModal({ row, subtitle, view, onClose, onRetry }: ModalProps) {
   const titleId = useId()
   const refs = useDialogBehavior(onClose)
   // Rendered into <body> so the whole page (header, main, footer) can be made inert behind it.
@@ -262,12 +259,9 @@ export function ScorecardModal({ row, subtitle, view, onClose, onRetry, favorite
         <button ref={refs.close} type="button" className="sc-close" onClick={onClose} aria-label="Close scorecard">
           ×
         </button>
-        <div className="sc-title">
-          <h2 id={titleId} className="sc-name">
-            {row.name}
-          </h2>
-          {favorite && <FavoriteStar name={row.name} on={favorite.on} onToggle={favorite.toggle} />}
-        </div>
+        <h2 id={titleId} className="sc-name">
+          {row.name}
+        </h2>
         <p className="sc-sub">{subtitle}</p>
         <Stats row={row} />
         <Announcer view={view} />

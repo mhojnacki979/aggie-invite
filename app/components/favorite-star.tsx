@@ -16,7 +16,11 @@ export function FavoriteStar({ name, on, onToggle }: StarProps) {
       className={on ? 'fav-star fav-on' : 'fav-star'}
       aria-pressed={on}
       aria-label={`${name} in your archers`}
-      onClick={onToggle}
+      onClick={(event) => {
+        // On a board row the whole row opens the scorecard; the star does only its own job.
+        event.stopPropagation()
+        onToggle()
+      }}
     >
       {on ? '★' : '☆'}
     </button>

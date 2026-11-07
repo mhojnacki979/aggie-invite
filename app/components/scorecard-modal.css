@@ -56,15 +56,8 @@
   outline-offset: 2px;
 }
 
-/* Name and favorite star share a line; the padding keeps both clear of the close button. */
-.sc-title {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding-right: 40px;
-}
-
 .sc-name {
+  padding-right: 40px;
   font-size: 20px;
   line-height: 1.2;
   overflow-wrap: anywhere;
