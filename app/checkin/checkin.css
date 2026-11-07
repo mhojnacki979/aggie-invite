@@ -194,6 +194,18 @@
   color: var(--final-text);
 }
 
+/* A checked tile has to read across the table in a bright gym: solid green with a check, not a tint. */
+.ck-tile.ck-checked,
+.ck-key.ck-checked {
+  background: var(--final-text);
+  color: var(--card);
+}
+
+.ck-tile.ck-checked::after {
+  content: ' ✓';
+  font-size: 13px;
+}
+
 .ck-none {
   grid-column: span 2;
   background: var(--card);
