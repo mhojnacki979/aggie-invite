@@ -415,3 +415,20 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------- Go to a division ---------- */
+
+/* Sits right under the search card, so the two read as one pair. */
+.search.jump {
+  margin-top: 10px;
+}
+
+.jump-select {
+  appearance: none;
+  padding-right: 36px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 20px) 50%, calc(100% - 15px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}

@@ -12,7 +12,9 @@ import type { ArcherRow, EventConfig } from '@/lib/types'
 import { isUnconfigured, useEventData } from '@/lib/use-event-data'
 import { useFavorites } from '@/lib/use-favorites'
 import type { Favorites } from '@/lib/use-favorites'
+import { listedDivisions } from '@/lib/division-options'
 import { ArcherSearch } from './archer-search'
+import { DivisionJump } from './division-jump'
 import { FavoritesBox } from './favorites-box'
 import { divisionHref } from './format'
 import { LineStrip } from './line-strip'
@@ -60,9 +62,7 @@ function Podiums({ divisions, lineByShooter, config, embedded, line, onClearLine
   // Several boards can share a page (2022), so the heading id carries the tournament.
   const headingId = `podiums-heading-${config.slug}`
   const scored = divisions.filter((division) => division.shot > 0)
-  // A live event lists every division, unscored ones as their archers at 0 (Michael, 2026-11-06).
-  // Finished years keep scored divisions only, so a no-show division never reads as zeros.
-  const all = config.live ? divisions : scored
+  const all = listedDivisions(divisions, config.live)
   const shown = line ? all.filter((division) => hasArcherOn(division, lineByShooter, line.key)) : all
   if (shown.length === 0) return <p className="muted">Podiums appear here once scoring starts.</p>
   const allFinal = shown.every((division) => division.status === 'final')
@@ -136,6 +136,7 @@ function Board({ config, state, view, embedded, line, onPickLine, onClearLine, f
       {view.lines.length > 0 && <LineStrip lines={view.lines} scope={scope} selected={line?.key ?? null} onSelect={onPickLine} />}
       {favorites && <FavoritesBox view={view} config={config} favorites={favorites} />}
       <ArcherSearch view={view} config={config} scope={scope} favorites={favorites} />
+      <DivisionJump view={view} config={config} scope={scope} />
       <Podiums
         divisions={view.divisions}
         lineByShooter={view.lineByShooter}
